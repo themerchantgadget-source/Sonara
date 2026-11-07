@@ -1,0 +1,1988 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0b0b0a" />
+<meta name="description" content="Sonara — private offline media vault for audio, video, images and documents. Device only." />
+<title>Sonara — Offline Media Hub</title>
+<style>
+:root {
+  --bg: #0b0b0a;
+  --surface: #171715;
+  --raised: #22211e;
+  --soft: #2b2925;
+  --text: #f5f2ea;
+  --muted: #a09b90;
+  --dim: #6f6b63;
+  --accent: #d97757;
+  --accent-soft: #3a2118;
+  --green: #76c893;
+  --danger: #e98a80;
+  --line: rgba(245,242,234,.08);
+  --white-line: rgba(245,242,234,.14);
+  --ease: cubic-bezier(.23,1,.32,1);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+  /* Spacious scale (8dp multiples) */
+  --s1: 8px;
+  --s2: 16px;
+  --s3: 24px;
+  --s4: 32px;
+  --s5: 40px;
+  --s6: 48px;
+  --s7: 56px;
+  --s8: 64px;
+  --s9: 80px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif; }
+body { padding: 0 0 calc(128px + var(--safe-b)); -webkit-font-smoothing: antialiased; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; border: 0; background: none; }
+button:active { transform: scale(.98); }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.app { max-width: 680px; margin: 0 auto; padding: var(--s5) var(--s3) var(--s6); }
+
+.topline, .section-head, .mini, .row, .setting, .feature-top, .tabbar, .sheet-head, .time { display: flex; align-items: center; }
+.topline, .section-head, .mini, .setting, .sheet-head, .time { justify-content: space-between; }
+
+.brand { font-size: 32px; line-height: 1; font-weight: 650; letter-spacing: -1.4px; }
+.brand i { color: var(--accent); font-style: normal; }
+.eyebrow, .label { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; }
+.eyebrow { margin-top: 10px; }
+
+.pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 8px 12px; background: var(--soft); color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .6px; }
+.pill.green { background: rgba(118,200,147,.14); color: #9be0b0; }
+.pill.accent { background: var(--accent-soft); color: #e99c82; }
+
+/* Hero — large type + open air */
+.hero { padding: var(--s8) 0 var(--s6); }
+.hero .eyebrow { color: var(--accent); margin-bottom: 4px; }
+h1 { font-size: clamp(44px, 11vw, 76px); line-height: .96; letter-spacing: -3.2px; font-weight: 500; margin: 16px 0 24px; max-width: 560px; }
+.body { color: var(--muted); font-size: 17px; line-height: 1.55; max-width: 480px; }
+
+.primary { background: var(--accent); color: #1a0f0a; padding: 18px 22px; border-radius: 14px; font-size: 13px; font-weight: 800; letter-spacing: .6px; margin-top: 32px; }
+.secondary { border: 1px solid var(--accent); color: var(--accent); padding: 16px 20px; border-radius: 14px; font-size: 13px; font-weight: 800; letter-spacing: .6px; margin-top: 24px; display: inline-block; }
+
+/* Stats — quiet, spaced */
+.stats { display: flex; gap: var(--s5); padding: var(--s5) 0; margin: var(--s4) 0 var(--s7); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.stat strong { display: block; font-size: 28px; font-weight: 520; letter-spacing: -0.8px; }
+.stat span { display: block; color: var(--dim); font-size: 11px; letter-spacing: 1.2px; margin-top: 6px; text-transform: uppercase; }
+
+/* Section heads — more air */
+.section-head { align-items: end; margin: var(--s7) 0 var(--s3); }
+.section-head h2 { font-size: 26px; font-weight: 550; letter-spacing: -.6px; margin: 8px 0 0; }
+.link { color: var(--accent); font-size: 13px; font-weight: 700; letter-spacing: .3px; }
+
+/* Feature / hero card — generous padding */
+.feature { background: var(--surface); border: 1px solid var(--line); border-radius: 28px; padding: var(--s4); }
+.feature-top { gap: var(--s3); flex-direction: column; align-items: flex-start; }
+.feature-copy { flex: 1; min-width: 0; width: 100%; }
+.feature h3 { font-size: 28px; font-weight: 560; margin: 14px 0 6px; letter-spacing: -.4px; }
+.meta { color: var(--muted); font-size: 15px; }
+.feature-open { display: block; width: 100%; text-align: left; color: var(--accent); border-top: 1px solid var(--line); padding-top: 20px; margin-top: 24px; font-size: 13px; font-weight: 800; letter-spacing: .5px; }
+
+.art { display: grid; place-items: center; border-radius: 18px; flex: none; font-size: 32px; font-weight: 400; background: #332521; color: #ddb19a; }
+.art.small { width: 64px; height: 64px; font-size: 26px; border-radius: 16px; }
+.art.large { width: min(78vw, 300px); height: min(78vw, 300px); margin: 0 auto 8px; font-size: 96px; border-radius: 24px; }
+
+/* List rows — taller, calmer */
+.row { gap: 16px; padding: 18px 8px; border-bottom: 1px solid var(--line); min-height: 88px; }
+.row.active { background: rgba(217,119,87,.07); border-radius: 16px; }
+.copy { min-width: 0; flex: 1; }
+.title { font-size: 17px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.2px; }
+.track-meta { color: var(--muted); font-size: 13px; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row-right { display: flex; align-items: center; gap: 10px; }
+.equal { color: var(--accent); font-size: 13px; letter-spacing: 2px; }
+
+.search { width: 100%; height: 56px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--text); padding: 0 20px; outline: none; font-size: 16px; }
+.search:focus { border-color: var(--accent); }
+
+.note, .empty { background: var(--surface); border-radius: 24px; border: 1px solid var(--line); padding: var(--s4); }
+.note { background: var(--accent-soft); border-color: transparent; margin-top: var(--s7); }
+.note b { color: var(--accent); font-size: 11px; letter-spacing: 1.5px; }
+.note p { font-size: 16px; line-height: 1.5; margin: 12px 0 0; }
+.empty h3 { margin: 0; font-size: 22px; font-weight: 560; }
+.empty p { color: var(--muted); font-size: 15px; line-height: 1.5; margin: 12px 0 0; }
+
+.playlist { display: flex; gap: 16px; align-items: center; padding: 14px 0; }
+.playlist-icon { display: grid; place-items: center; width: 56px; height: 56px; background: var(--soft); border-radius: 16px; color: var(--accent); font-size: 24px; }
+
+.settings-hero { background: var(--surface); border: 1px solid var(--line); border-radius: 28px; padding: var(--s5); margin-top: var(--s4); }
+.settings-hero h2 { font-size: 32px; font-weight: 520; letter-spacing: -1.2px; margin: 14px 0 10px; }
+.setting { padding: 22px 0; border-bottom: 1px solid var(--line); }
+.setting-title { font-size: 17px; font-weight: 650; }
+.setting-desc { color: var(--muted); font-size: 13px; margin-top: 6px; }
+.switch { width: 52px; height: 32px; border-radius: 20px; background: var(--soft); padding: 4px; transition: background .18s var(--ease); }
+.switch span { display: block; width: 24px; height: 24px; background: var(--muted); border-radius: 50%; transition: transform .18s var(--ease), background .18s var(--ease); }
+.switch.on { background: var(--accent); }
+.switch.on span { transform: translateX(20px); background: #fff; }
+
+.danger { width: 100%; border: 1px solid rgba(220,80,70,.45); color: var(--danger); border-radius: 14px; padding: 18px; margin-top: var(--s7); font-size: 13px; font-weight: 800; letter-spacing: .5px; }
+.version { text-align: center; color: var(--dim); font-size: 11px; letter-spacing: 1.2px; margin: var(--s7) 0; }
+
+/* Bottom player — more air */
+.bottom { position: fixed; z-index: 5; left: 0; right: 0; bottom: 0; background: rgba(11,11,10,.97); border-top: 1px solid var(--line); padding: 12px max(20px, calc((100vw - 680px)/2 + 20px)) calc(14px + var(--safe-b)); backdrop-filter: blur(16px); }
+.mini { background: var(--raised); border: 1px solid var(--white-line); border-radius: 18px; padding: 12px 14px; gap: 14px; }
+.mini-main { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; text-align: left; }
+.mini-copy { min-width: 0; }
+.mini .title { font-size: 15px; }
+.mini .track-meta { font-size: 12px; }
+.offline { color: var(--green); font-weight: 800; }
+.controls { display: flex; align-items: center; gap: 14px; }
+.control { font-size: 28px; line-height: 1; min-width: 40px; min-height: 40px; }
+.play { width: 44px; height: 44px; border-radius: 50%; background: var(--accent); color: #1a0f0a; font-size: 16px; font-weight: 900; display: grid; place-items: center; }
+.tabbar { justify-content: space-around; margin-top: 12px; }
+.tab { color: var(--dim); font-size: 11px; font-weight: 800; letter-spacing: .7px; padding: 12px 10px; }
+.tab.active { color: var(--accent); }
+
+/* Sheets */
+.modal { position: fixed; inset: 0; z-index: 10; background: rgba(0,0,0,.72); display: flex; align-items: flex-end; }
+.sheet { background: var(--bg); border-radius: 32px 32px 0 0; padding: 18px 24px calc(36px + var(--safe-b)); width: 100%; max-height: 94vh; overflow: auto; animation: up .26s var(--ease); }
+@keyframes up { from { transform: translateY(24px); opacity: .5; } to { transform: none; opacity: 1; } }
+.handle { width: 48px; height: 5px; border-radius: 4px; background: var(--soft); margin: 0 auto 24px; }
+.close { font-size: 34px; color: var(--muted); font-weight: 300; line-height: 1; min-width: 44px; min-height: 44px; }
+.player h2 { font-size: 32px; margin: 24px 0 8px; letter-spacing: -.6px; font-weight: 560; }
+.player .meta { font-size: 16px; }
+.progress { height: 6px; background: var(--soft); border-radius: 4px; margin-top: 28px; overflow: hidden; }
+.progress i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .1s linear; }
+.time { color: var(--dim); font-size: 12px; margin-top: 10px; }
+.transport { display: flex; align-items: center; justify-content: space-between; margin: 28px 0; }
+.transport button { font-size: 28px; min-width: 48px; min-height: 48px; }
+.transport .big { width: 72px; height: 72px; border-radius: 50%; background: var(--accent); color: #1a0f0a; font-size: 24px; font-weight: 900; display: grid; place-items: center; }
+.chips { display: flex; gap: 10px; flex-wrap: wrap; margin: 20px 0; }
+.chip { border: 1px solid var(--line); border-radius: 999px; padding: 12px 16px; color: var(--muted); font-size: 12px; font-weight: 750; letter-spacing: .5px; }
+.chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--text); }
+.lyrics { min-height: 50vh; }
+.lyrics-line { font-size: 28px; line-height: 1.4; color: var(--muted); margin: 0 0 22px; }
+.lyrics-line.active { color: var(--text); font-size: 34px; font-weight: 620; }
+
+.hidden { display: none !important; }
+.video-wrap { background: #000; border-radius: 24px; overflow: hidden; margin-top: var(--s4); border: 1px solid var(--line); }
+.video-wrap video { display: block; width: 100%; max-height: 56vh; background: #000; }
+
+.media-filters { display: flex; gap: 10px; flex-wrap: wrap; margin: 24px 0 20px; }
+.filter-chip { border: 1px solid var(--line); border-radius: 999px; padding: 12px 16px; color: var(--muted); font-size: 12px; font-weight: 750; letter-spacing: .4px; }
+.filter-chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--text); }
+.media-type { font-size: 11px; font-weight: 800; letter-spacing: .7px; color: var(--accent); }
+.media-actions { display: flex; align-items: center; gap: 12px; }
+
+.toast { position: fixed; z-index: 30; left: 50%; bottom: calc(140px + var(--safe-b)); transform: translateX(-50%); background: var(--raised); border: 1px solid var(--white-line); border-radius: 999px; padding: 14px 20px; color: var(--text); font-size: 14px; box-shadow: 0 16px 40px #0009; max-width: 90vw; text-align: center; }
+.toast.error { border-color: var(--danger); color: #ffd1cb; }
+
+.viewer-media { max-width: 100%; max-height: 56vh; display: block; margin: 24px auto; border-radius: 20px; background: #000; }
+.viewer-doc { width: 100%; height: 56vh; border: 1px solid var(--line); border-radius: 20px; background: #fff; margin-top: 24px; }
+.metadata-line { color: var(--muted); font-size: 14px; line-height: 1.5; margin-top: 14px; }
+
+.spotify-card { background: linear-gradient(135deg, #183d2b, #12231b); border: 1px solid rgba(118,200,147,.28); border-radius: 28px; padding: var(--s4); margin-top: var(--s4); }
+.spotify-mark { color: #9be0b0; font-size: 11px; font-weight: 800; letter-spacing: 1.3px; }
+.form-row { display: grid; gap: 10px; margin-top: 20px; }
+.form-row label { color: var(--muted); font-size: 11px; font-weight: 750; letter-spacing: .8px; }
+.form-row input { width: 100%; height: 52px; border: 1px solid var(--white-line); border-radius: 14px; background: rgba(0,0,0,.25); color: var(--text); padding: 0 16px; outline: none; font-size: 16px; }
+.form-row input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(118,200,147,.15); }
+.spotify-status { color: #b8ddc3; font-size: 14px; line-height: 1.5; margin-top: 16px; }
+.spotify-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.spotify-actions .primary { margin-top: 18px; background: #1ed760; color: #07130a; }
+.spotify-actions .secondary { margin-top: 18px; border-color: #9be0b0; color: #9be0b0; }
+.spotify-list { margin-top: 20px; }
+
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+@media (min-width: 680px) {
+  .app { padding-top: var(--s8); padding-left: var(--s5); padding-right: var(--s5); }
+  .hero { padding-top: var(--s9); }
+  .hero h1 { font-size: 76px; }
+  .feature-top { flex-direction: row; align-items: center; }
+  .art.large { margin: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+/* —— Real library + clean empty —— */
+.lib-toolbar { margin-top: var(--s4); }
+.lib-controls { margin-top: var(--s3); }
+.lib-meta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 16px; }
+.lib-select {
+  height: 44px; border: 1px solid var(--line); border-radius: 12px;
+  background: var(--surface); color: var(--text); padding: 0 14px;
+  font-size: 14px; outline: none; min-width: 120px;
+}
+.lib-select:focus { border-color: var(--accent); }
+.view-toggle { display: flex; gap: 4px; margin-left: auto; }
+.view-btn {
+  width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--muted); font-size: 16px;
+  display: grid; place-items: center;
+}
+.view-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--text); }
+.group-label {
+  font-size: 12px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase;
+  color: var(--dim); margin: 28px 0 12px; padding-left: 4px;
+}
+.grid-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.grid-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 20px;
+  padding: 14px; text-align: left; display: flex; flex-direction: column; gap: 10px;
+  min-height: 180px;
+}
+.grid-card.active { border-color: var(--accent); background: rgba(217,119,87,.08); }
+.grid-art {
+  width: 100%; aspect-ratio: 1; border-radius: 14px;
+  display: grid; place-items: center; font-size: 36px; color: rgba(245,242,234,.7);
+}
+.grid-title {
+  font-size: 15px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.grid-meta { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Centered, calm empty state (Google Artifacts style) */
+.lib-empty {
+  min-height: 52vh;
+  display: grid;
+  place-items: center;
+  padding: 48px 24px;
+  margin: 24px 0;
+}
+.lib-empty-inner {
+  text-align: center;
+  max-width: 360px;
+}
+.lib-empty-inner h2 {
+  font-size: clamp(28px, 7vw, 40px);
+  font-weight: 520;
+  letter-spacing: -1.2px;
+  line-height: 1.15;
+  margin: 0 0 16px;
+  color: var(--text);
+}
+.lib-empty-inner p {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 0 0 28px;
+}
+.lib-empty-inner .primary {
+  margin-top: 0;
+  padding: 16px 28px;
+  font-size: 14px;
+}
+
+.media-list { margin-bottom: 8px; }
+
+
+/* —— Artifacts-style Home —— */
+.home-top { padding: 12px 0 8px; }
+.home-title-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.home-title {
+  font-size: clamp(36px, 9vw, 48px);
+  font-weight: 520;
+  letter-spacing: -1.8px;
+  margin: 0;
+  line-height: 1.05;
+}
+.home-actions { display: flex; gap: 8px; }
+.icon-btn {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: transparent; color: var(--muted);
+  font-size: 20px; display: grid; place-items: center;
+}
+.icon-btn:active { background: var(--soft); }
+.home-sub {
+  color: var(--dim);
+  font-size: 14px;
+  margin-top: 10px;
+  letter-spacing: .2px;
+}
+
+.make-section { margin-top: 40px; }
+.make-label {
+  color: var(--dim);
+  font-size: 14px;
+  margin-bottom: 16px;
+  letter-spacing: .2px;
+}
+.make-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.make-card {
+  position: relative;
+  border-radius: 20px;
+  padding: 22px 16px 18px;
+  text-align: left;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 0;
+  overflow: hidden;
+}
+.make-audio { background: linear-gradient(145deg, #2a221c, #1c1814); }
+.make-video { background: linear-gradient(145deg, #1f2428, #15181b); }
+.make-files { background: linear-gradient(145deg, #22201c, #181612); }
+.make-icon {
+  font-size: 28px;
+  color: rgba(245,242,234,.85);
+  margin-bottom: 18px;
+}
+.make-name {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -.2px;
+}
+.make-badge {
+  position: absolute;
+  top: 12px; right: 12px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .4px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(217,119,87,.22);
+  color: #e9b39a;
+}
+
+.continue-section { margin-top: 44px; }
+.continue-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 16px;
+  text-align: left;
+  margin-top: 8px;
+}
+.continue-art {
+  width: 72px; height: 72px; border-radius: 16px;
+  display: grid; place-items: center;
+  font-size: 28px; font-weight: 500;
+  color: rgba(245,242,234,.8);
+  flex: none;
+}
+.continue-body { flex: 1; min-width: 0; }
+.continue-title {
+  font-size: 18px; font-weight: 650; letter-spacing: -.3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.continue-meta {
+  color: var(--muted); font-size: 13px; margin-top: 4px;
+}
+.continue-play {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--accent); color: #1a0f0a;
+  display: grid; place-items: center;
+  font-size: 16px; font-weight: 900; flex: none;
+}
+.continue-list { margin-top: 8px; }
+.continue-row {
+  width: 100%;
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 8px;
+  text-align: left;
+  border-radius: 14px;
+}
+.continue-row:active { background: rgba(245,242,234,.04); }
+.continue-row-art {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: var(--soft);
+  display: grid; place-items: center;
+  font-size: 18px; color: var(--muted); flex: none;
+}
+
+.home-stats {
+  display: flex; gap: 32px;
+  margin-top: 48px;
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
+}
+.home-stat strong {
+  display: block; font-size: 22px; font-weight: 550; letter-spacing: -.4px;
+}
+.home-stat span {
+  display: block; color: var(--dim); font-size: 12px;
+  letter-spacing: .8px; text-transform: uppercase; margin-top: 4px;
+}
+
+.home-foot {
+  margin-top: 40px;
+  padding-bottom: 12px;
+}
+.home-foot p {
+  color: var(--dim);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 320px;
+}
+
+@media (min-width: 680px) {
+  .make-grid { grid-template-columns: repeat(3, 160px); }
+  .continue-art { width: 88px; height: 88px; font-size: 34px; }
+}
+
+
+.video-stage {
+  margin-top: 24px;
+  background: #000;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.video-stage video {
+  display: block;
+  width: 100%;
+  max-height: 56vh;
+  background: #000;
+}
+.video-caption-bar {
+  padding: 14px 16px;
+  background: var(--surface);
+}
+.sub-paste {
+  width: 100%;
+  min-height: 120px;
+  border: 1px solid var(--white-line);
+  border-radius: 14px;
+  background: rgba(0,0,0,.25);
+  color: var(--text);
+  padding: 12px 14px;
+  font-size: 13px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  outline: none;
+  resize: vertical;
+}
+.sub-paste:focus { border-color: var(--accent); }
+.tabbar { flex-wrap: wrap; gap: 2px; }
+.tab { font-size: 9px; padding: 8px 6px; letter-spacing: .4px; }
+
+
+.eq-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0 20px;
+}
+.eq-bands {
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 16px 8px 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  overflow-x: auto;
+}
+.eq-band {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 40px;
+  flex: 1;
+}
+.eq-band input[type="range"] {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 28px;
+  height: 120px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.eq-gain {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.eq-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .4px;
+  color: var(--dim);
+}
+
+</style>
+</head>
+<body>
+<div id="app" role="application" aria-label="Sonara offline media hub"></div>
+<script>
+/* Sonara Media Hub — self-contained offline vault. No CDN required. */
+(function () {
+  "use strict";
+
+  // Compact demo tone (C5, ~0.35s) — replaces the previous 200KB+ silent blob
+  const DEMO_AUDIO = "data:audio/wav;base64,UklGRm48AABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YUo8AAAAAAsALQBkAK4ABwFrAdgBVgLbAnQDJAPnBM0F0QbwByQIZwm0CvYLNQx1DbcN9A40D3IPrw/qDygQYxCgEN0QGhFYEZcR1BESElASjxLNEwsTShOJE8gTCBRIFIYU0RUvFZ0WIxbBFzcXrBgkGJwYFBmKGf0ZcBniGlIaxBo0G6IbEBx+HOgcVh3EHjIfoB8NIHoh6CFVIcQiMiOiIxEkgCTuJV0mzyc/KLIpJCqWKwgsfC3vLmIv1zBMMYEy9zNuNOQ1WjbSN0g4vzk0Oao6HjuTPAg9fj3zPmk+3z9WQMxBRUK4Qy1EokUZRpFHCkiASP5JeErsS2NM3E1WTtFPSlDFUT5SuVMwVKZVHVWWVhBWilcEWH9Y+Vl0We5aaFvjXF9d2l5WX9FgTmHJYkdjwmQ/Zb1mPGe6aDlpuGo3a7hsNmy1bTVutm83cLhxOXK6czx0vnVAdrl3N3i1eTR6snsxfK99LH6qfyqAqoEqgqiDJoSkhSaGpIciiaGKIoumjCmNqY4oj6iQKZGqkizTqZOrlK2WLpetmC+ZsJswnLGeMaCyoTSjtqU4prqoO6m+qkCrw6xJrc+vVbDdsma07rZ4uAO5kLofuqy7O7zLvVu+7L9/wBHApcI3w83EZMbgyXTLCs2hzxXRptQi1qXbJ9yl4Knvrve0P7kHwBPBG8NDxjDJQcszzFnO4tFs0+HVJNao2KraL9u03TjfvuJC5MPnROjF6kjsze9R8dfzX/Xl92349fp0/AD9hv8NAZP=";
+
+  const DEMO = {
+    id: "demo",
+    title: "Midnight Drive",
+    artist: "Sonara Sessions",
+    album: "Offline / Vol. 01",
+    quality: "HIGH QUALITY",
+    uri: DEMO_AUDIO,
+    lyrics: ["City lights in the rearview", "Engine hums softly", "A quieter place to go"],
+    demo: true,
+    kind: "audio",
+    mime: "audio/wav",
+    size: 0,
+    source: "bundled",
+    favorite: false,
+    tags: [],
+    createdAt: 0,
+    updatedAt: 0
+  };
+
+  const DB_NAME = "sonara-offline-media";
+  const DB_VERSION = 2;
+  let dbPromise = null;
+
+  const state = {
+    tab: "home",
+    tracks: [{ ...DEMO }],
+    recent: [],
+    queue: ["demo"],
+    current: "demo",
+    videoId: null,
+    query: "",
+    filter: "all",
+    sort: "recent",
+    viewMode: "list",   // list | grid
+    groupBy: "none",    // none | type | recent
+    viewerId: null,
+    collections: [],
+    playing: false,
+    shuffle: false,
+    repeat: false,
+    autoplay: true,
+    modal: null,
+    spotify: { connected: false, playlists: [] },
+    theme: "dark",
+    eq: {
+      enabled: true,
+      preset: "flat",
+      bands: [
+        { freq: 60, gain: 0, type: "lowshelf", label: "60" },
+        { freq: 150, gain: 0, type: "peaking", label: "150" },
+        { freq: 400, gain: 0, type: "peaking", label: "400" },
+        { freq: 1000, gain: 0, type: "peaking", label: "1k" },
+        { freq: 2400, gain: 0, type: "peaking", label: "2.4k" },
+        { freq: 6000, gain: 0, type: "peaking", label: "6k" },
+        { freq: 12000, gain: 0, type: "highshelf", label: "12k" }
+      ]
+    },
+    subtitles: {}  // id -> vtt text
+  };
+
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
+
+  function openDB() {
+    if (dbPromise) return dbPromise;
+    dbPromise = new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains("tracks")) db.createObjectStore("tracks", { keyPath: "id" });
+        if (!db.objectStoreNames.contains("media")) db.createObjectStore("media", { keyPath: "id" });
+        if (!db.objectStoreNames.contains("settings")) db.createObjectStore("settings", { keyPath: "key" });
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    return dbPromise;
+  }
+
+  async function idbGetAll(store) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const req = db.transaction(store, "readonly").objectStore(store).getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function idbPutAll(store, items) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(store, "readwrite");
+      const os = tx.objectStore(store);
+      items.forEach((x) => os.put(x));
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  function classifyMediaFile(file) {
+    const t = (file.type || "").toLowerCase();
+    const n = (file.name || "").toLowerCase();
+    if (t.startsWith("audio/")) return "audio";
+    if (t.startsWith("video/")) return "video";
+    if (t.startsWith("image/")) return "image";
+    if (t === "application/pdf" || /\.(pdf|txt|md|epub|rtf|doc|docx)$/i.test(n)) return "document";
+    return "other";
+  }
+
+  function mediaIdentity(file) {
+    return [file.name || "", file.size || 0, file.type || "", file.lastModified || 0].join("|");
+  }
+
+  function normalizeMedia(t) {
+    const x = {
+      ...t,
+      kind: t.kind || ((t.mime || "").startsWith("video/") ? "video" : "audio"),
+      mime: t.mime || t.type || "",
+      size: t.size || t.blob?.size || 0,
+      source: t.source || "local",
+      favorite: !!t.favorite,
+      tags: Array.isArray(t.tags) ? t.tags : [],
+      createdAt: t.createdAt || Date.now(),
+      updatedAt: t.updatedAt || Date.now()
+    };
+    if (x.blob && !x.uri) x.uri = URL.createObjectURL(x.blob);
+    else if (x.demo) x.uri = DEMO_AUDIO;
+    return x;
+  }
+
+  async function migrateLegacyRecords() {
+    const media = await idbGetAll("media");
+    if (media.length) {
+      state.tracks = media.map(normalizeMedia);
+      return;
+    }
+    const legacy = await idbGetAll("tracks");
+    if (legacy.length) state.tracks = legacy.map(normalizeMedia);
+    if (!state.tracks.length) {
+      state.tracks = [normalizeMedia({ ...DEMO })];
+    }
+    await idbPutAll("media", state.tracks.map((t) => ({ ...t, uri: t.demo ? DEMO_AUDIO : "", blob: t.blob || null })));
+  }
+
+  async function load() {
+    try {
+      await migrateLegacyRecords();
+      const settings = await idbGetAll("settings");
+      const x = settings.find((v) => v.key === "state")?.value || {};
+      if (Array.isArray(x.recent)) state.recent = x.recent;
+      if (Array.isArray(x.queue)) state.queue = x.queue.filter((id) => state.tracks.some((t) => t.id === id && t.kind === "audio"));
+      if (!state.queue.length) state.queue = state.tracks.filter((t) => t.kind === "audio").map((t) => t.id);
+      if (x.current && state.tracks.some((t) => t.id === x.current)) state.current = x.current;
+      if (x.videoId && state.tracks.some((t) => t.id === x.videoId && t.kind === "video")) state.videoId = x.videoId;
+      if (typeof x.autoplay === "boolean") state.autoplay = x.autoplay;
+      if (x.spotify) state.spotify = x.spotify;
+      if (Array.isArray(x.collections)) state.collections = x.collections;
+      if (x.subtitles) state.subtitles = x.subtitles;
+      if (x.eq) state.eq = x.eq;
+      if (x.theme) state.theme = x.theme;
+    } catch (e) {
+      console.warn("Sonara storage unavailable; using this-session mode.", e);
+    }
+  }
+
+  async function save() {
+    try {
+      await idbPutAll("media", state.tracks.map((t) => ({ ...t, uri: t.demo ? DEMO_AUDIO : "", blob: t.blob || null })));
+      await idbPutAll("settings", [{
+        key: "state",
+        value: {
+          recent: state.recent,
+          queue: state.queue,
+          current: state.current,
+          videoId: state.videoId,
+          autoplay: state.autoplay,
+          spotify: state.spotify,
+          collections: state.collections, subtitles: state.subtitles, eq: state.eq, theme: state.theme
+        }
+      }]);
+    } catch (e) {
+      console.warn("Save failed", e);
+    }
+  }
+
+  function formatBytes(n) {
+    if (!n) return "0 B";
+    const units = ["B", "KB", "MB", "GB"];
+    const i = Math.min(Math.floor(Math.log(n) / Math.log(1024)), units.length - 1);
+    return `${(n / 1024 ** i).toFixed(i ? 1 : 0)} ${units[i]}`;
+  }
+
+  function showToast(message, tone = "") {
+    const old = document.querySelector(".toast");
+    if (old) old.remove();
+    const el = document.createElement("div");
+    el.className = "toast " + tone;
+    el.setAttribute("role", "status");
+    el.setAttribute("aria-live", "polite");
+    el.textContent = message;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3200);
+  }
+
+  function track(id = state.current) {
+    return state.tracks.find((t) => t.id === id) || DEMO;
+  }
+
+  function art(t, cls = "small") {
+    const n = (t.title || "♪").trim()[0]?.toUpperCase() || "♪";
+    let h = 20;
+    for (const c of (t.title || "")) h = (h + c.charCodeAt(0) * 7) % 360;
+    return `<div class="art ${cls}" style="background:hsl(${h} 28% 23%);color:hsl(${h} 70% 78%)" aria-hidden="true">${esc(n)}</div>`;
+  }
+
+  function pill(t, tone = "") {
+    return `<span class="pill ${tone}">${esc(t)}</span>`;
+  }
+
+  function row(t) {
+    const active = t.id === state.current && state.playing;
+    return `<div class="row ${active ? "active" : ""}" data-play="${esc(t.id)}" role="button" tabindex="0">
+      <button type="button" aria-label="Play ${esc(t.title)}">${art(t)}</button>
+      <div class="copy">
+        <div class="title">${esc(t.title)}</div>
+        <div class="track-meta">${esc(t.artist)} · ${esc(t.album)}</div>
+      </div>
+      <div class="row-right">
+        ${active ? '<span class="equal" aria-label="Now playing">•••</span>' : ""}
+        ${pill(t.quality, t.quality === "LOSSLESS" ? "green" : "")}
+        <button type="button" class="link" data-add="${esc(t.id)}" aria-label="Add to queue">＋</button>
+      </div>
+    </div>`;
+  }
+
+  function header(title, sub, action = "") {
+    return `<div class="topline"><div><div class="brand">${title}<i>.</i></div><div class="eyebrow">${sub}</div></div>${action}</div>`;
+  }
+
+  function home() {
+    const t = track();
+    const recent = state.recent.map(track).filter(Boolean);
+    const hasUserMedia = state.tracks.some((x) => !x.demo);
+    const totalSize = state.tracks.reduce((a, x) => a + (x.size || 0), 0);
+    const continueItems = (recent.length ? recent : [t]).slice(0, 3);
+
+    return `
+      <div class="home-top">
+        <div class="home-title-row">
+          <h1 class="home-title">Sonara</h1>
+          <div class="home-actions">
+            <button type="button" class="icon-btn" data-tab="library" aria-label="Search library">⌕</button>
+            <button type="button" class="icon-btn" data-tab="library" aria-label="Open library">☰</button>
+          </div>
+        </div>
+        <div class="home-sub">Private offline media · device only</div>
+      </div>
+
+      <div class="make-section">
+        <div class="make-label">Make something new</div>
+        <div class="make-grid">
+          <button type="button" class="make-card make-audio" data-import>
+            <div class="make-icon">♪</div>
+            <div class="make-name">Audio</div>
+            <span class="make-badge">New</span>
+          </button>
+          <button type="button" class="make-card make-video" data-import-video>
+            <div class="make-icon">▶</div>
+            <div class="make-name">Video</div>
+            <span class="make-badge">New</span>
+          </button>
+          <button type="button" class="make-card make-files" data-import>
+            <div class="make-icon">▦</div>
+            <div class="make-name">Files</div>
+          </button>
+        </div>
+      </div>
+
+      <div class="continue-section">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Continue</div>
+            <h2>${state.playing ? "Now playing" : "Recently played"}</h2>
+          </div>
+          <button type="button" class="link" data-tab="library">Library →</button>
+        </div>
+
+        <button type="button" class="continue-card" data-player>
+          <div class="continue-art" style="background:hsl(${(t.title||'').split('').reduce((h,c)=>(h+c.charCodeAt(0)*7)%360,20)} 28% 22%)">${(t.title||'♪').trim()[0]?.toUpperCase()||'♪'}</div>
+          <div class="continue-body">
+            <div class="continue-title">${esc(t.title)}</div>
+            <div class="continue-meta">${esc(t.artist)} · ${state.playing ? "Playing now" : "Ready offline"}</div>
+          </div>
+          <div class="continue-play" aria-hidden="true">${state.playing ? "Ⅱ" : "▶"}</div>
+        </button>
+
+        ${continueItems.length > 1 ? `
+          <div class="continue-list">
+            ${continueItems.slice(1).map((item) => `
+              <button type="button" class="continue-row" data-play="${esc(item.id)}">
+                <div class="continue-row-art">${(item.title||'♪').trim()[0]?.toUpperCase()||'♪'}</div>
+                <div class="copy">
+                  <div class="title">${esc(item.title)}</div>
+                  <div class="track-meta">${esc(item.artist)}</div>
+                </div>
+              </button>
+            `).join("")}
+          </div>` : ""}
+      </div>
+
+      <div class="home-stats">
+        <div class="home-stat"><strong>${state.tracks.length}</strong><span>Items</span></div>
+        <div class="home-stat"><strong>${formatBytes(totalSize)}</strong><span>On device</span></div>
+        <div class="home-stat"><strong>${recent.length}</strong><span>Recent</span></div>
+      </div>
+
+      <div class="home-foot">
+        <p>Your files stay on this device. No account. No feed. No stream.</p>
+      </div>`;
+  }
+
+  function typeLabel(k) {
+    return ({ audio: "AUDIO", video: "VIDEO", image: "IMAGE", document: "DOC", other: "FILE", spotify: "SPOTIFY" })[k] || "FILE";
+  }
+
+  function filteredMediaRecords() {
+    let list = state.tracks.filter((t) => {
+      const q = state.query.toLowerCase().trim();
+      const hay = [t.title, t.artist, t.album, t.name, (t.tags || []).join(" ")].join(" ").toLowerCase();
+      if (q && !hay.includes(q)) return false;
+      if (state.filter === "favorites" && !t.favorite) return false;
+      if (state.filter === "recent" && !state.recent.includes(t.id)) return false;
+      if (["audio", "video", "image", "document", "spotify"].includes(state.filter) && t.kind !== state.filter) return false;
+      return true;
+    });
+    if (state.sort === "name") list.sort((a, b) => a.title.localeCompare(b.title));
+    else if (state.sort === "size") list.sort((a, b) => (b.size || 0) - (a.size || 0));
+    else list.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    return list;
+  }
+
+  function groupMedia(list) {
+    if (state.groupBy === "none") return [{ key: "all", label: null, items: list }];
+    if (state.groupBy === "type") {
+      const order = ["audio", "video", "image", "document", "spotify", "other"];
+      const map = {};
+      list.forEach((t) => {
+        const k = t.kind || "other";
+        if (!map[k]) map[k] = [];
+        map[k].push(t);
+      });
+      return order.filter((k) => map[k]?.length).map((k) => ({
+        key: k,
+        label: typeLabel(k),
+        items: map[k]
+      }));
+    }
+    // recent / favorites style groups
+    const fav = list.filter((t) => t.favorite);
+    const rec = list.filter((t) => state.recent.includes(t.id) && !t.favorite);
+    const rest = list.filter((t) => !t.favorite && !state.recent.includes(t.id));
+    const groups = [];
+    if (fav.length) groups.push({ key: "favorites", label: "Favorites", items: fav });
+    if (rec.length) groups.push({ key: "recent", label: "Recently played", items: rec });
+    if (rest.length) groups.push({ key: "all", label: "Everything else", items: rest });
+    return groups.length ? groups : [{ key: "all", label: null, items: list }];
+  }
+
+  function renderMediaCard(t) {
+    const active = t.id === state.current && state.playing;
+    const icon = t.kind === "video" ? "▶" : t.kind === "image" ? "▧" : t.kind === "document" ? "▤" : t.kind === "spotify" ? "♫" : "♪";
+    if (state.viewMode === "grid") {
+      return `<button type="button" class="grid-card ${active ? "active" : ""}" data-open-media="${esc(t.id)}" aria-label="Open ${esc(t.title)}">
+        <div class="grid-art" style="background:hsl(${(t.title || "").split("").reduce((h,c)=>(h+c.charCodeAt(0)*7)%360,20)} 28% 22%)">${icon}</div>
+        <div class="grid-title">${esc(t.title)}</div>
+        <div class="grid-meta">${esc(t.artist || typeLabel(t.kind))}</div>
+      </button>`;
+    }
+    return `<div class="row media-card ${active ? "active" : ""}" data-open-media="${esc(t.id)}" role="button" tabindex="0">
+      <div class="playlist-icon" aria-hidden="true">${icon}</div>
+      <div class="copy">
+        <div class="media-type">${typeLabel(t.kind)}${t.favorite ? " · FAVORITE" : ""}</div>
+        <div class="title">${esc(t.title)}</div>
+        <div class="track-meta">${esc(t.artist || "Local file")} · ${esc(t.album || formatBytes(t.size || 0))}</div>
+      </div>
+      <div class="media-actions">
+        <button type="button" class="link" data-favorite="${esc(t.id)}" aria-label="${t.favorite ? "Remove from" : "Add to"} favorites">${t.favorite ? "★" : "☆"}</button>
+        <button type="button" class="link" data-open-media="${esc(t.id)}">OPEN</button>
+      </div>
+    </div>`;
+  }
+
+  function libraryEmpty() {
+    return `<div class="lib-empty">
+      <div class="lib-empty-inner">
+        <h2>Your media,<br>offline.</h2>
+        <p>Add songs, videos, images or documents from this device. They stay here and play without a connection.</p>
+        <button type="button" class="primary" data-import>Add files</button>
+      </div>
+    </div>`;
+  }
+
+  function library() {
+    const list = filteredMediaRecords();
+    const groups = groupMedia(list);
+    const counts = {
+      all: state.tracks.length,
+      audio: state.tracks.filter((x) => x.kind === "audio").length,
+      video: state.tracks.filter((x) => x.kind === "video").length,
+      image: state.tracks.filter((x) => x.kind === "image").length,
+      document: state.tracks.filter((x) => x.kind === "document").length,
+      spotify: state.tracks.filter((x) => x.kind === "spotify").length,
+      favorites: state.tracks.filter((x) => x.favorite).length,
+      recent: state.recent.length
+    };
+    const chips = [
+      ["all", "All"],
+      ["audio", "Audio"],
+      ["video", "Video"],
+      ["image", "Images"],
+      ["document", "Docs"],
+      ["favorites", "Favorites"],
+      ["recent", "Recent"]
+    ];
+    const totalSize = state.tracks.reduce((a, x) => a + (x.size || 0), 0);
+    const hasMedia = state.tracks.some((t) => !t.demo) || state.tracks.length > 1;
+
+    return `
+      ${header("Library", hasMedia ? `${state.tracks.length} items · ${formatBytes(totalSize)}` : "PRIVATE MEDIA VAULT",
+        `<button type="button" class="primary" style="margin:0;padding:14px 16px;border-radius:14px;font-size:16px" data-import aria-label="Import media">＋</button>`)}
+      
+      <div class="lib-toolbar">
+        <input class="search" value="${esc(state.query)}" placeholder="Search your library" aria-label="Search your library">
+        <div class="lib-controls">
+          <div class="media-filters" role="group" aria-label="Filter by type">
+            ${chips.map(([id, label]) => `<button type="button" class="filter-chip ${state.filter === id ? "active" : ""}" data-filter="${id}" aria-pressed="${state.filter === id}">${label}${counts[id] != null ? " " + counts[id] : ""}</button>`).join("")}
+          </div>
+          <div class="lib-meta-row">
+            <select class="lib-select" aria-label="Sort" data-sort>
+              <option value="recent" ${state.sort === "recent" ? "selected" : ""}>Recent</option>
+              <option value="name" ${state.sort === "name" ? "selected" : ""}>Name</option>
+              <option value="size" ${state.sort === "size" ? "selected" : ""}>Size</option>
+            </select>
+            <select class="lib-select" aria-label="Group by" data-group>
+              <option value="none" ${state.groupBy === "none" ? "selected" : ""}>No grouping</option>
+              <option value="type" ${state.groupBy === "type" ? "selected" : ""}>By type</option>
+              <option value="activity" ${state.groupBy === "activity" ? "selected" : ""}>Favorites & recent</option>
+            </select>
+            <div class="view-toggle" role="group" aria-label="View mode">
+              <button type="button" class="view-btn ${state.viewMode === "list" ? "active" : ""}" data-view="list" aria-pressed="${state.viewMode === "list"}" aria-label="List view">☰</button>
+              <button type="button" class="view-btn ${state.viewMode === "grid" ? "active" : ""}" data-view="grid" aria-pressed="${state.viewMode === "grid"}" aria-label="Grid view">▦</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      ${!hasMedia && !state.query && state.filter === "all" ? libraryEmpty() : `
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">YOUR LIBRARY</div>
+            <h2>${list.length} result${list.length === 1 ? "" : "s"}</h2>
+          </div>
+        </div>
+        ${list.length === 0 ? `
+          <div class="empty">
+            <h3>Nothing matches</h3>
+            <p>Try a different search or filter. Your files stay on this device.</p>
+            <button type="button" class="secondary" data-import>Add files</button>
+          </div>` : groups.map((g) => `
+            ${g.label ? `<div class="group-label">${esc(g.label)}</div>` : ""}
+            <div class="${state.viewMode === "grid" ? "grid-list" : "media-list"}">
+              ${g.items.map(renderMediaCard).join("")}
+            </div>
+          `).join("")}
+      `}
+
+      <div class="note">
+        <b>LOCAL LIBRARY CONTRACT</b>
+        <p>Files stay on this device until you reset the library or clear site data. Nothing is uploaded.</p>
+      </div>`;
+  }
+
+  function openMedia(id) {
+    const t = track(id);
+    if (!t) return;
+    if (t.kind === "audio") play(id);
+    else if (t.kind === "spotify") {
+      if (t.externalUrl) window.open(t.externalUrl, "_blank", "noopener,noreferrer");
+    } else {
+      state.viewerId = id;
+      state.modal = "viewer";
+      recordRecent(id);
+      render();
+    }
+  }
+
+  function library() {
+    const list = filteredMediaRecords();
+    const counts = {
+      all: state.tracks.length,
+      audio: state.tracks.filter((x) => x.kind === "audio").length,
+      video: state.tracks.filter((x) => x.kind === "video").length,
+      image: state.tracks.filter((x) => x.kind === "image").length,
+      document: state.tracks.filter((x) => x.kind === "document").length,
+      spotify: state.tracks.filter((x) => x.kind === "spotify").length,
+      favorites: state.tracks.filter((x) => x.favorite).length,
+      recent: state.recent.length
+    };
+    const chips = [["all", "ALL"], ["audio", "AUDIO"], ["video", "VIDEO"], ["image", "IMAGES"], ["document", "DOCS"], ["spotify", "SPOTIFY"], ["favorites", "FAVORITES"], ["recent", "RECENT"]];
+    return `
+      ${header("Library", `${state.tracks.length} MEDIA ITEMS / ${formatBytes(state.tracks.reduce((a, x) => a + (x.size || 0), 0))} STORED`,
+        `<button type="button" class="primary" style="margin:0;padding:14px 16px;border-radius:14px;font-size:16px" data-import aria-label="Import media">＋</button>`)}
+      <input class="search" value="${esc(state.query)}" placeholder="Search all local media" aria-label="Search all local media">
+      <div class="media-filters" role="group" aria-label="Filter media">
+        ${chips.map(([id, label]) => `<button type="button" class="filter-chip ${state.filter === id ? "active" : ""}" data-filter="${id}" aria-pressed="${state.filter === id}">${label} ${counts[id] || 0}</button>`).join("")}
+      </div>
+      <div class="section-head">
+        <div><div class="eyebrow">YOUR MEDIA HUB</div><h2>${list.length} result${list.length === 1 ? "" : "s"}</h2></div>
+        <select class="search" style="width:auto;height:35px;padding:0 8px" aria-label="Sort media">
+          <option value="recent" ${state.sort === "recent" ? "selected" : ""}>Recent</option>
+          <option value="name" ${state.sort === "name" ? "selected" : ""}>Name</option>
+        </select>
+      </div>
+      ${list.length ? list.map(renderMediaCard).join("") : `
+        <div class="empty">
+          <h3>No media in this view.</h3>
+          <p>Import audio, video, images, PDFs, text, or other files. Sonara keeps supported local media on this device.</p>
+          <button type="button" class="secondary" data-import>Add files</button>
+        </div>`}
+      <div class="note">
+        <b>LOCAL MEDIA CONTRACT</b>
+        <p>Your files stay on this device until you reset the library or clear browser/site data. Nothing is uploaded.</p>
+      </div>`;
+  }
+
+  // Spotify helpers (session-only tokens; config kept in memory for this session)
+  let spotifyConfigMem = { clientId: "", redirectUri: "" };
+
+  function randomVerifier(n = 64) {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+    const a = crypto.getRandomValues(new Uint8Array(n));
+    return [...a].map((x) => chars[x % chars.length]).join("");
+  }
+
+  async function challenge(v) {
+    const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(v));
+    return btoa(String.fromCharCode(...new Uint8Array(hash))).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+  }
+
+  function spotifyRedirect() {
+    return $("#spotifyRedirect")?.value.trim() || spotifyConfigMem.redirectUri || location.href.split("?")[0].split("#")[0];
+  }
+
+  async function spotifyConnect() {
+    const clientId = $("#spotifyClientId")?.value.trim();
+    const redirectUri = spotifyRedirect();
+    if (!clientId || !redirectUri) return alert("Enter your Spotify Client ID and exact registered redirect URI.");
+    if (location.protocol === "file:") return alert("Spotify OAuth cannot return to a file:// page. Host this HTML at HTTPS or localhost.");
+    const verifier = randomVerifier();
+    const stateToken = randomVerifier(32);
+    const codeChallenge = await challenge(verifier);
+    spotifyConfigMem = { clientId, redirectUri };
+    // Use sessionStorage only for the short-lived PKCE handshake
+    try {
+      sessionStorage.setItem("sonara-spotify-pkce", JSON.stringify({ verifier, state: stateToken, clientId, redirectUri }));
+    } catch (_) {}
+    const u = new URL("https://accounts.spotify.com/authorize");
+    u.search = new URLSearchParams({
+      client_id: clientId,
+      response_type: "code",
+      redirect_uri: redirectUri,
+      scope: "playlist-read-private playlist-read-collaborative user-read-private",
+      state: stateToken,
+      code_challenge_method: "S256",
+      code_challenge: codeChallenge
+    }).toString();
+    location.href = u;
+  }
+
+  async function spotifyCallback() {
+    const p = new URLSearchParams(location.search);
+    const code = p.get("code");
+    const returnedState = p.get("state");
+    if (!code) return;
+    let saved = null;
+    try { saved = JSON.parse(sessionStorage.getItem("sonara-spotify-pkce") || "null"); } catch (_) {}
+    if (!saved || returnedState !== saved.state) return;
+    const r = await fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: saved.clientId,
+        grant_type: "authorization_code",
+        code,
+        redirect_uri: saved.redirectUri,
+        code_verifier: saved.verifier
+      })
+    });
+    if (!r.ok) throw new Error("Spotify token exchange failed");
+    const token = await r.json();
+    try {
+      sessionStorage.setItem("sonara-spotify-token", JSON.stringify({ access_token: token.access_token, expires_at: Date.now() + token.expires_in * 1000 }));
+    } catch (_) {}
+    history.replaceState({}, "", saved.redirectUri);
+    state.spotify.connected = true;
+    await spotifyLoadPlaylists();
+  }
+
+  async function spotifyApi(path) {
+    let token = null;
+    try { token = JSON.parse(sessionStorage.getItem("sonara-spotify-token") || "null"); } catch (_) {}
+    if (!token || token.expires_at < Date.now()) throw new Error("Spotify connection expired; reconnect.");
+    const r = await fetch("https://api.spotify.com/v1" + path, { headers: { Authorization: "Bearer " + token.access_token } });
+    if (!r.ok) throw new Error("Spotify API request failed");
+    return r.json();
+  }
+
+  async function spotifyLoadPlaylists() {
+    const data = await spotifyApi("/me/playlists?limit=50");
+    state.spotify.playlists = data.items || [];
+    state.spotify.connected = true;
+    await save();
+  }
+
+  async function spotifyImportPlaylist(id) {
+    const data = await spotifyApi("/playlists/" + encodeURIComponent(id) + "/items?limit=50");
+    let count = 0;
+    for (const item of data.items || []) {
+      const t = item.item || item.track;
+      if (!t || t.type !== "track") continue;
+      const rid = "spotify-" + t.id;
+      if (state.tracks.some((x) => x.id === rid)) continue;
+      state.tracks.unshift({
+        id: rid,
+        title: t.name,
+        artist: (t.artists || []).map((a) => a.name).join(", "),
+        album: t.album?.name || "Spotify",
+        quality: "SPOTIFY",
+        kind: "spotify",
+        mime: "",
+        size: 0,
+        source: "spotify",
+        externalUrl: t.external_urls?.spotify || "",
+        favorite: false,
+        tags: [],
+        lyrics: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      });
+      count++;
+    }
+    await save();
+    render();
+    showToast(`${count} Spotify metadata item${count === 1 ? "" : "s"} imported`);
+  }
+
+  function workspace() {
+    const videos = state.tracks.filter((t) => t.kind === "video");
+    const v = videos.find((t) => t.id === state.videoId) || videos[0];
+    const pls = state.spotify.playlists || [];
+    return `
+      ${header("Workspace", "LOCAL MEDIA + SPOTIFY BRIDGE",
+        `<button type="button" class="primary" style="margin:0;padding:14px 16px;border-radius:14px;font-size:16px" data-import-video aria-label="Import video">＋</button>`)}
+      <section class="settings-hero">
+        <div class="eyebrow" style="color:var(--accent)">A SEPARATE MEDIA SPACE</div>
+        <h2>Watch what you keep.</h2>
+        <p class="body">Import personal video files and keep them beside your music. Media is stored as a browser file, not a fragile data URL.</p>
+      </section>
+      ${v ? `
+        <div class="video-wrap">
+          <video id="video" controls playsinline preload="metadata" src="${esc(v.uri)}"></video>
+        </div>
+        <div class="section-head">
+          <div><div class="eyebrow">NOW WATCHING</div><h2>${esc(v.title)}</h2></div>
+          ${pill("STORED LOCALLY", "green")}
+        </div>` : `
+        <div class="empty" style="margin-top:18px">
+          <h3>Your video workspace is empty.</h3>
+          <p>Choose a video from the Files app. Sonara stores it in IndexedDB so it remains available after reloads.</p>
+          <button type="button" class="secondary" data-import-video>Add video</button>
+        </div>`}
+      <div class="spotify-card">
+        <div class="spotify-mark">SPOTIFY BRIDGE · METADATA ONLY</div>
+        <h2 style="margin:9px 0 5px">Bring your playlists into Sonara.</h2>
+        <p class="body">Connect with Spotify PKCE to import playlist and track metadata. Audio stays on Spotify and is never copied into Sonara.</p>
+        <div class="form-row">
+          <label for="spotifyClientId">SPOTIFY CLIENT ID</label>
+          <input id="spotifyClientId" autocomplete="off" value="${esc(spotifyConfigMem.clientId || "")}" placeholder="From developer.spotify.com/dashboard">
+        </div>
+        <div class="form-row">
+          <label for="spotifyRedirect">REGISTERED REDIRECT URI</label>
+          <input id="spotifyRedirect" autocomplete="url" value="${esc(spotifyConfigMem.redirectUri || "")}" placeholder="https://your-domain.example/sonara.html">
+        </div>
+        <div class="spotify-actions">
+          <button type="button" class="primary" data-spotify-connect>${state.spotify.connected ? "RECONNECT SPOTIFY" : "CONNECT SPOTIFY"}</button>
+          ${state.spotify.connected ? '<button type="button" class="secondary" data-spotify-refresh>REFRESH PLAYLISTS</button>' : ""}
+        </div>
+        <div class="spotify-status">${state.spotify.connected ? "Connected for this browser session." : "Your Client ID is safe to keep in this file; never put a client secret in a browser app."}</div>
+        ${pls.length ? `
+          <div class="spotify-list">
+            <div class="eyebrow">YOUR PLAYLISTS</div>
+            ${pls.map((x) => `
+              <div class="row">
+                <div class="playlist-icon">♫</div>
+                <div class="copy">
+                  <div class="title">${esc(x.name)}</div>
+                  <div class="track-meta">${x.tracks?.total || 0} tracks · Spotify</div>
+                </div>
+                <button type="button" class="link" data-spotify-import="${esc(x.id)}">IMPORT</button>
+              </div>`).join("")}
+          </div>` : ""}
+      </div>
+      <div class="section-head">
+        <div><div class="eyebrow">VIDEO LIBRARY</div><h2>${videos.length} local ${videos.length === 1 ? "video" : "videos"}</h2></div>
+      </div>
+      <div class="media-list">
+        ${videos.map((x) => `
+          <div class="row ${x.id === state.videoId ? "active" : ""}" data-video="${esc(x.id)}" role="button" tabindex="0">
+            <div class="playlist-icon">▶</div>
+            <div class="copy">
+              <div class="title">${esc(x.title)}</div>
+              <div class="track-meta">${esc(x.album)} · stored locally</div>
+            </div>
+            <button type="button" class="link">OPEN</button>
+          </div>`).join("")}
+      </div>`;
+  }
+
+  function renderViewer(t) {
+    const media = t.kind === "image"
+      ? `<img class="viewer-media" src="${esc(t.uri)}" alt="${esc(t.title)}">`
+      : t.kind === "video"
+        ? `<video class="viewer-media" controls playsinline src="${esc(t.uri)}"></video>`
+        : t.kind === "document"
+          ? (t.mime === "application/pdf"
+              ? `<iframe class="viewer-doc" title="${esc(t.title)}" src="${esc(t.uri)}"></iframe>`
+              : `<div class="empty"><h3>${esc(t.title)}</h3><p>This document is stored locally. Use Download to open it in a compatible app.</p></div>`)
+          : "";
+    return `
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Media viewer">
+        <div class="sheet">
+          <div class="handle"></div>
+          <div class="sheet-head">
+            <div>
+              <div class="eyebrow">${typeLabel(t.kind)} VIEWER</div>
+              <h2 style="margin:6px 0 0">${esc(t.title)}</h2>
+            </div>
+            <button type="button" class="close" data-close aria-label="Close viewer">×</button>
+          </div>
+          ${media}
+          <div class="metadata-line">${esc(t.artist || "Local file")} · ${formatBytes(t.size || 0)} · Stored on this device</div>
+          <div class="chips">
+            <button type="button" class="chip ${t.favorite ? "active" : ""}" data-favorite="${esc(t.id)}">${t.favorite ? "★ FAVORITE" : "☆ FAVORITE"}</button>
+            <button type="button" class="chip" data-download="${esc(t.id)}">DOWNLOAD</button>
+            <button type="button" class="chip" data-remove="${esc(t.id)}">REMOVE</button>
+          </div>
+          <div class="note">
+            <b>ACCESSIBILITY NOTE</b>
+            <p>Captions and transcripts can be added to this media item in a future update. Nothing is auto-played.</p>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function settings() {
+    const total = state.tracks.reduce((a, x) => a + (x.size || 0), 0);
+    const kinds = ["audio", "video", "image", "document", "spotify"];
+    const cfg = spotifyConfigMem || {};
+    const pls = state.spotify.playlists || [];
+    return `
+      ${header("Settings", "CONNECTORS · APPEARANCE · STORAGE")}
+      
+      <section class="settings-hero">
+        <div class="eyebrow" style="color:var(--accent)">INTEGRATIONS</div>
+        <h2>Connectors</h2>
+        <p class="body">Same idea as Grok: connectors live in Settings. Spotify is metadata-only — audio never leaves Spotify.</p>
+      </section>
+      <div class="spotify-card">
+        <div class="spotify-mark">SPOTIFY · METADATA ONLY</div>
+        <div class="form-row">
+          <label for="spotifyClientId">CLIENT ID</label>
+          <input id="spotifyClientId" value="${esc(cfg.clientId||"")}" placeholder="From developer.spotify.com/dashboard" autocomplete="off">
+        </div>
+        <div class="form-row">
+          <label for="spotifyRedirect">REDIRECT URI</label>
+          <input id="spotifyRedirect" value="${esc(cfg.redirectUri||"")}" placeholder="https://your-host/sonara.html" autocomplete="url">
+        </div>
+        <div class="spotify-actions">
+          <button type="button" class="primary" data-spotify-connect>${state.spotify.connected ? "Reconnect" : "Connect Spotify"}</button>
+          ${state.spotify.connected ? '<button type="button" class="secondary" data-spotify-refresh>Refresh playlists</button>' : ""}
+        </div>
+        <div class="spotify-status">${state.spotify.connected ? "Connected this session." : "Never put a client secret in a browser app."}</div>
+        ${pls.length ? `<div class="spotify-list"><div class="eyebrow">PLAYLISTS</div>${pls.map(x=>`<div class="row"><div class="playlist-icon">♫</div><div class="copy"><div class="title">${esc(x.name)}</div><div class="track-meta">${x.tracks?.total||0} tracks</div></div><button type="button" class="link" data-spotify-import="${esc(x.id)}">Import</button></div>`).join("")}</div>` : ""}
+      </div>
+
+      <div class="section-head"><div><div class="eyebrow">APPEARANCE</div><h2>Theme</h2></div></div>
+      <div class="setting">
+        <div><div class="setting-title">Dark (current)</div><div class="setting-desc">Sonara is designed dark-first for late-night listening.</div></div>
+        <span class="pill accent">ACTIVE</span>
+      </div>
+
+      <div class="section-head"><div><div class="eyebrow">PLAYBACK</div><h2>Equalizer</h2></div></div>
+      <div class="setting">
+        <div><div class="setting-title">EQ enabled</div><div class="setting-desc">Real-time 7-band Web Audio equalizer.</div></div>
+        <button type="button" class="switch ${state.eq.enabled?"on":""}" data-eq-toggle aria-pressed="${state.eq.enabled}"><span></span></button>
+      </div>
+      <div class="eq-presets">
+        ${Object.keys(EQ_PRESETS).map((name) => `
+          <button type="button" class="chip ${state.eq.preset===name?"active":""}" data-eq-preset="${name}">${name.toUpperCase()}</button>
+        `).join("")}
+        <button type="button" class="chip ${state.eq.preset==="custom"?"active":""}" data-eq-preset="custom">CUSTOM</button>
+      </div>
+      <div class="eq-bands">
+        ${state.eq.bands.map((b, i) => `
+          <div class="eq-band">
+            <input type="range" min="-12" max="12" step="0.5" value="${b.gain}" data-eq-band="${i}" aria-label="${b.label} Hz gain">
+            <div class="eq-gain">${b.gain > 0 ? "+" : ""}${b.gain}</div>
+            <div class="eq-label">${b.label}</div>
+          </div>
+        `).join("")}
+      </div>
+      <div class="setting" style="margin-top:20px">
+        <div><div class="setting-title">Autoplay next</div><div class="setting-desc">Continue through the audio queue.</div></div>
+        <button type="button" class="switch ${state.autoplay?"on":""}" data-autoplay aria-pressed="${state.autoplay}"><span></span></button>
+      </div>
+
+      <div class="section-head"><div><div class="eyebrow">STORAGE</div><h2>${state.tracks.length} items · ${formatBytes(total)}</h2></div></div>
+      ${kinds.map(k=>`<div class="setting"><div><div class="setting-title">${typeLabel(k)}</div><div class="setting-desc">${state.tracks.filter(x=>x.kind===k).length} items</div></div>${pill(formatBytes(state.tracks.filter(x=>x.kind===k).reduce((a,x)=>a+(x.size||0),0)),"green")}</div>`).join("")}
+
+      <button type="button" class="danger" data-reset>Reset local library</button>
+      <div class="version">SONARA 1.2 · WORKSPACES · INLINE VIDEO · SETTINGS CONNECTORS</div>`;
+  }
+
+  function mini() {
+    const t = track();
+    return `
+      <div class="mini">
+        <button type="button" class="mini-main" data-player aria-label="Open now playing">
+          ${art(t)}
+          <div class="mini-copy">
+            <div class="title">${esc(t.title)}</div>
+            <div class="track-meta">${esc(t.artist)} · <span class="offline">OFFLINE</span></div>
+          </div>
+        </button>
+        <div class="controls">
+          <button type="button" class="control" data-prev aria-label="Previous track">‹</button>
+          <button type="button" class="play" data-toggle aria-label="${state.playing ? "Pause" : "Play"}">${state.playing ? "Ⅱ" : "▶"}</button>
+          <button type="button" class="control" data-next aria-label="Next track">›</button>
+        </div>
+      </div>
+      <div class="tabbar" role="tablist">
+        ${[["home","HOME"],["library","LIBRARY"],["music","MUSIC"],["video","VIDEO"],["photos","PHOTOS"],["docs","DOCS"],["settings","SETTINGS"]].map(([id,label])=>
+          `<button type="button" class="tab ${state.tab===id?"active":""}" data-tab="${id}" role="tab" aria-selected="${state.tab===id}">${state.tab===id?"●":"○"} ${label}</button>`
+        ).join("")}
+      </div>`;
+  }
+
+  function player() {
+    const t = track();
+    const a = audio;
+    return `
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Now playing">
+        <div class="sheet player">
+          <div class="handle"></div>
+          <div class="sheet-head">
+            <div class="eyebrow">NOW PLAYING</div>
+            <button type="button" class="close" data-close aria-label="Close player">×</button>
+          </div>
+          ${art(t, "large")}
+          <h2>${esc(t.title)}</h2>
+          <div class="meta">${esc(t.artist)} · ${esc(t.album)}</div>
+          <div class="progress"><i style="width:${a.duration ? Math.min(100, (a.currentTime / a.duration) * 100) : 0}%"></i></div>
+          <div class="time"><span>${fmt(a.currentTime)}</span><span>${fmt(a.duration)}</span></div>
+          <div class="transport">
+            <button type="button" data-prev aria-label="Previous track">|‹</button>
+            <button type="button" data-seek="-15" aria-label="Seek backward 15 seconds">↶15</button>
+            <button type="button" class="big" data-toggle aria-label="${state.playing ? "Pause" : "Play"}">${state.playing ? "Ⅱ" : "▶"}</button>
+            <button type="button" data-seek="15" aria-label="Seek forward 15 seconds">15↷</button>
+            <button type="button" data-next aria-label="Next track">›|</button>
+          </div>
+          <div class="chips">
+            <button type="button" class="chip ${state.shuffle ? "active" : ""}" data-shuffle aria-pressed="${state.shuffle}">SHUFFLE</button>
+            <button type="button" class="chip ${state.repeat ? "active" : ""}" data-repeat aria-pressed="${state.repeat}">REPEAT</button>
+            <button type="button" class="chip" data-lyrics>LYRICS</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function lyrics() {
+    const t = track();
+    return `
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Lyrics">
+        <div class="sheet lyrics">
+          <div class="sheet-head">
+            <div>
+              <div class="eyebrow">LYRICS</div>
+              <h2 style="margin:6px 0 0">${esc(t.title)}</h2>
+            </div>
+            <button type="button" class="close" data-close aria-label="Close lyrics">×</button>
+          </div>
+          ${t.lyrics?.length
+            ? t.lyrics.map((l, i) => `<p class="lyrics-line ${i === 1 ? "active" : ""}">${esc(l)}</p>`).join("")
+            : '<p class="body">No local lyrics yet.</p>'}
+        </div>
+      </div>`;
+  }
+
+
+  function tracksOf(kind) {
+    return state.tracks.filter((t) => t.kind === kind);
+  }
+
+  function srtToVtt(srt) {
+    let t = String(srt || "").replace(/\r/g, "").trim();
+    if (!t) return "";
+    if (!t.startsWith("WEBVTT")) t = "WEBVTT\n\n" + t;
+    // SRT uses comma for ms, VTT uses period
+    t = t.replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, "$1.$2");
+    return t;
+  }
+
+  function attachSubtitles(videoEl, trackId) {
+    if (!videoEl) return;
+    // clear existing tracks
+    [...videoEl.querySelectorAll("track")].forEach((tr) => tr.remove());
+    const text = state.subtitles[trackId];
+    if (!text) return;
+    const vtt = srtToVtt(text);
+    const blob = new Blob([vtt], { type: "text/vtt" });
+    const url = URL.createObjectURL(blob);
+    const track = document.createElement("track");
+    track.kind = "subtitles";
+    track.label = "Subtitles";
+    track.srclang = "en";
+    track.src = url;
+    track.default = true;
+    videoEl.appendChild(track);
+    // show
+    setTimeout(() => {
+      if (videoEl.textTracks && videoEl.textTracks[0]) videoEl.textTracks[0].mode = "showing";
+    }, 100);
+  }
+
+  function musicWorkspace() {
+    const list = tracksOf("audio");
+    const current = track();
+    return `
+      ${header("Music", "YOUR OFFLINE MUSIC ROOM")}
+      <section class="settings-hero">
+        <div class="eyebrow" style="color:var(--accent)">SANDBOXED WORKSPACE</div>
+        <h2>Only audio lives here.</h2>
+        <p class="body">Queue, play, and organize music without seeing video or documents. Library still holds everything.</p>
+        <button type="button" class="primary" data-import style="margin-top:20px">Add audio</button>
+      </section>
+      <div class="section-head"><div><div class="eyebrow">QUEUE</div><h2>${list.length} tracks</h2></div></div>
+      ${list.length ? list.map(row).join("") : `<div class="empty"><h3>No audio yet</h3><p>Import mp3, wav, m4a, flac, or other audio files.</p><button type="button" class="secondary" data-import>Add audio</button></div>`}
+      <div class="note"><b>MUSIC CONTRACT</b><p>This workspace only shows audio. Playback uses the shared offline player.</p></div>`;
+  }
+
+  function videoWorkspace() {
+    const list = tracksOf("video");
+    const v = list.find((t) => t.id === state.videoId) || list[0];
+    const subText = v ? (state.subtitles[v.id] || "") : "";
+    return `
+      ${header("Video", "INLINE PLAYER · NO SYSTEM FULLSCREEN")}
+      <section class="settings-hero">
+        <div class="eyebrow" style="color:var(--accent)">SANDBOXED WORKSPACE</div>
+        <h2>Watch in place.</h2>
+        <p class="body">Videos play inline inside Sonara. Paste subtitles (SRT or VTT). Best support: mp4, webm, mov. MKV support depends on the browser.</p>
+        <button type="button" class="primary" data-import-video style="margin-top:20px">Add video</button>
+      </section>
+      ${v ? `
+        <div class="video-stage">
+          <video id="ws-video" controls playsinline webkit-playsinline preload="metadata" src="${esc(v.uri)}"></video>
+          <div class="video-caption-bar">
+            <div class="title">${esc(v.title)}</div>
+            <div class="track-meta">${formatBytes(v.size || 0)} · ${esc(v.mime || "video")}</div>
+          </div>
+        </div>
+        <div class="form-row" style="margin-top:20px">
+          <label for="subPaste">PASTE SUBTITLES (SRT OR VTT)</label>
+          <textarea id="subPaste" class="sub-paste" rows="5" placeholder="1&#10;00:00:01,000 --> 00:00:04,000&#10;Hello from Sonara">${esc(subText)}</textarea>
+          <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+            <button type="button" class="secondary" style="margin:0" data-apply-subs="${esc(v.id)}">Apply subtitles</button>
+            <button type="button" class="link" data-clear-subs="${esc(v.id)}">Clear</button>
+          </div>
+        </div>
+      ` : `<div class="empty" style="margin-top:24px"><h3>No videos yet</h3><p>Import mp4, mov, webm, or other video files. They play inline.</p><button type="button" class="secondary" data-import-video>Add video</button></div>`}
+      <div class="section-head"><div><div class="eyebrow">VIDEO LIBRARY</div><h2>${list.length} file${list.length===1?"":"s"}</h2></div></div>
+      ${list.map((x) => `
+        <div class="row ${x.id===state.videoId?"active":""}" data-video="${esc(x.id)}" role="button" tabindex="0">
+          <div class="playlist-icon">▶</div>
+          <div class="copy"><div class="title">${esc(x.title)}</div><div class="track-meta">${formatBytes(x.size||0)}</div></div>
+          <button type="button" class="link">OPEN</button>
+        </div>`).join("")}
+      <div class="note"><b>FORMAT NOTE</b><p>mp4 / webm / mov work best on iOS. MKV often fails in Safari — convert to mp4 when possible. Subtitles: paste SRT or VTT, then Apply.</p></div>`;
+  }
+
+  function photosWorkspace() {
+    const list = tracksOf("image");
+    return `
+      ${header("Photos", "YOUR IMAGE VAULT")}
+      <section class="settings-hero">
+        <div class="eyebrow" style="color:var(--accent)">SANDBOXED WORKSPACE</div>
+        <h2>Only photos live here.</h2>
+        <p class="body">Browse images stored on this device. Tap to open the viewer.</p>
+        <button type="button" class="primary" data-import style="margin-top:20px">Add images</button>
+      </section>
+      ${list.length ? `<div class="grid-list" style="margin-top:24px">${list.map(renderMediaCard).join("")}</div>` :
+        `<div class="empty"><h3>No photos yet</h3><p>Import jpg, png, webp, heic, or other images.</p><button type="button" class="secondary" data-import>Add images</button></div>`}
+      <div class="note"><b>PHOTOS CONTRACT</b><p>Images stay on device. Viewer opens in-app.</p></div>`;
+  }
+
+  function docsWorkspace() {
+    const list = tracksOf("document");
+    return `
+      ${header("Documents", "READLE-STYLE LOCAL DOCS")}
+      <section class="settings-hero">
+        <div class="eyebrow" style="color:var(--accent)">SANDBOXED WORKSPACE</div>
+        <h2>Only documents live here.</h2>
+        <p class="body">PDFs and text files stored offline. Open in the in-app viewer or download.</p>
+        <button type="button" class="primary" data-import style="margin-top:20px">Add documents</button>
+      </section>
+      ${list.length ? list.map(renderMediaCard).join("") :
+        `<div class="empty"><h3>No documents yet</h3><p>Import pdf, txt, md, or other documents.</p><button type="button" class="secondary" data-import>Add documents</button></div>`}
+      <div class="note"><b>DOCS CONTRACT</b><p>Files stay on this device. PDF opens in an embedded viewer when possible.</p></div>`;
+  }
+
+  function render() {
+    const main = state.tab === "home" ? home()
+      : state.tab === "library" ? library()
+      : state.tab === "music" ? musicWorkspace()
+      : state.tab === "video" ? videoWorkspace()
+      : state.tab === "photos" ? photosWorkspace()
+      : state.tab === "docs" ? docsWorkspace()
+      : settings();
+    $("#app").innerHTML = `
+      <main class="app" id="main-content">${main}</main>
+      <div class="bottom">${mini()}</div>
+      ${state.modal === "player" ? player()
+        : state.modal === "lyrics" ? lyrics()
+        : state.modal === "viewer" && state.viewerId ? renderViewer(track(state.viewerId))
+        : ""}`;
+    bind();
+    // Inline video + subtitles for Video workspace
+    if (state.tab === "video" && state.videoId) {
+      const v = document.getElementById("ws-video");
+      if (v) attachSubtitles(v, state.videoId);
+    }
+  }
+
+  function fmt(s) {
+    if (!Number.isFinite(s) || s <= 0) return "0:00";
+    s = Math.floor(s);
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  }
+
+  const audio = new Audio();
+  audio.preload = "auto";
+  audio.src = DEMO_AUDIO;
+  audio.crossOrigin = "anonymous";
+
+  // —— Real-time equalizer (Web Audio API) ——
+  let audioCtx = null;
+  let mediaSource = null;
+  let eqFilters = [];
+  let eqReady = false;
+
+  const EQ_PRESETS = {
+    flat:      [0, 0, 0, 0, 0, 0, 0],
+    bass:      [8, 5, 2, 0, 0, -1, -2],
+    treble:    [-2, -1, 0, 1, 3, 6, 8],
+    vocal:     [-3, -2, 1, 5, 4, 1, -1],
+    electronic:[6, 4, 0, -2, 2, 5, 6],
+    classical: [3, 2, 0, 0, -1, 2, 4],
+    rock:      [5, 3, -1, 1, 3, 4, 3],
+    soft:      [2, 1, 0, -1, -1, 1, 2]
+  };
+
+  function ensureEQ() {
+    if (eqReady) return;
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      mediaSource = audioCtx.createMediaElementSource(audio);
+      eqFilters = state.eq.bands.map((b) => {
+        const f = audioCtx.createBiquadFilter();
+        f.type = b.type;
+        f.frequency.value = b.freq;
+        f.Q.value = b.type === "peaking" ? 1.0 : 0.7;
+        f.gain.value = state.eq.enabled ? b.gain : 0;
+        return f;
+      });
+      // chain: source -> f0 -> f1 -> ... -> destination
+      let node = mediaSource;
+      eqFilters.forEach((f) => {
+        node.connect(f);
+        node = f;
+      });
+      node.connect(audioCtx.destination);
+      eqReady = true;
+    } catch (e) {
+      console.warn("EQ unavailable", e);
+    }
+  }
+
+  function applyEQGains() {
+    if (!eqReady || !eqFilters.length) return;
+    state.eq.bands.forEach((b, i) => {
+      if (eqFilters[i]) {
+        const g = state.eq.enabled ? b.gain : 0;
+        eqFilters[i].gain.setTargetAtTime(g, audioCtx.currentTime, 0.03);
+      }
+    });
+  }
+
+  function setEQPreset(name) {
+    const gains = EQ_PRESETS[name] || EQ_PRESETS.flat;
+    state.eq.preset = name;
+    state.eq.bands.forEach((b, i) => { b.gain = gains[i] ?? 0; });
+    applyEQGains();
+    save();
+    render();
+  }
+
+  function setEQBand(index, gain) {
+    gain = Math.max(-12, Math.min(12, Number(gain) || 0));
+    if (state.eq.bands[index]) {
+      state.eq.bands[index].gain = gain;
+      state.eq.preset = "custom";
+      applyEQGains();
+      save();
+    }
+  }
+
+  function toggleEQ() {
+    state.eq.enabled = !state.eq.enabled;
+    applyEQGains();
+    save();
+    render();
+  }
+
+  function play(id = state.current) {
+    const t = track(id);
+    if (!t) return;
+    state.current = t.id;
+    if (t.kind === "spotify") {
+      if (t.externalUrl) window.open(t.externalUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+    if (t.kind !== "audio") return openMedia(t.id);
+    if (!state.queue.includes(t.id)) state.queue.unshift(t.id);
+    state.recent = [t.id, ...state.recent.filter((x) => x !== t.id)].slice(0, 30);
+    t.updatedAt = Date.now();
+    if (t.blob && !t.uri) t.uri = URL.createObjectURL(t.blob);
+    audio.src = t.uri;
+    ensureEQ();
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    applyEQGains();
+    audio.play().then(() => {
+      state.playing = true;
+      save();
+      render();
+    }).catch(() => {
+      state.playing = false;
+      render();
+      showToast("Playback failed — try another file", "error");
+    });
+  }
+
+  function toggle() {
+    if (state.playing) {
+      audio.pause();
+      state.playing = false;
+      render();
+    } else play();
+  }
+
+  function next(dir = 1) {
+    if (state.queue.length < 2) return;
+    let i = state.queue.indexOf(state.current);
+    let n = state.shuffle
+      ? Math.floor(Math.random() * state.queue.length)
+      : (i + dir + state.queue.length) % state.queue.length;
+    play(state.queue[n]);
+  }
+
+  async function importMediaFiles(files) {
+    const accepted = [...files];
+    const result = { added: [], duplicates: [], unsupported: [], failed: [] };
+    const existing = new Set(state.tracks.map((t) => t.identity).filter(Boolean));
+    for (const file of accepted) {
+      const kind = classifyMediaFile(file);
+      if (kind === "other") {
+        result.unsupported.push(file.name);
+        continue;
+      }
+      if (file.size > 1024 * 1024 * 1024) {
+        result.failed.push(file.name + ": file exceeds 1 GB safety limit");
+        continue;
+      }
+      const identity = mediaIdentity(file);
+      if (existing.has(identity) && !confirm(`${file.name} is already in Sonara. Import another copy?`)) {
+        result.duplicates.push(file.name);
+        continue;
+      }
+      try {
+        const t = normalizeMedia({
+          id: "local-" + Date.now() + Math.random().toString(16).slice(2),
+          title: file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " "),
+          artist: "Imported locally",
+          album: "Your device",
+          quality: "LOCAL",
+          mime: file.type,
+          size: file.size,
+          uri: URL.createObjectURL(file),
+          blob: file,
+          kind,
+          identity,
+          source: "local",
+          favorite: false,
+          tags: [],
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          lyrics: []
+        });
+        state.tracks.unshift(t);
+        existing.add(identity);
+        result.added.push(file.name);
+        if (kind === "audio" && !state.queue.includes(t.id)) state.queue.push(t.id);
+        if (kind === "video") state.videoId = t.id;
+      } catch (e) {
+        result.failed.push(file.name + ": " + e.message);
+      }
+    }
+    await save();
+    state.tab = "library";
+    render();
+    const total = result.added.length;
+    if (total) showToast(`${total} media item${total === 1 ? "" : "s"} imported`);
+    if (result.unsupported.length) showToast(`${result.unsupported.length} unsupported file${result.unsupported.length === 1 ? "" : "s"} skipped`, "error");
+    if (result.failed.length) showToast(`${result.failed.length} import error${result.failed.length === 1 ? "" : "s"}`, "error");
+    return result;
+  }
+
+  async function recordRecent(id) {
+    state.recent = [id, ...state.recent.filter((x) => x !== id)].slice(0, 30);
+    const t = track(id);
+    if (t) t.updatedAt = Date.now();
+    await save();
+  }
+
+  async function toggleFavorite(id) {
+    const t = track(id);
+    if (!t) return;
+    t.favorite = !t.favorite;
+    await save();
+    render();
+    showToast(t.favorite ? "Added to favorites" : "Removed from favorites");
+  }
+
+  async function createCollection(name) {
+    name = (name || "").trim();
+    if (!name) return;
+    state.collections = state.collections || [];
+    state.collections.push({ id: "collection-" + Date.now(), name, members: [], createdAt: Date.now() });
+    await save();
+    render();
+    showToast("Collection created");
+  }
+
+  async function downloadLocalMedia(id) {
+    const t = track(id);
+    if (!t || !t.blob) return showToast("This item has no local file to download", "error");
+    const a = document.createElement("a");
+    a.href = t.uri || URL.createObjectURL(t.blob);
+    a.download = t.title || "sonara-media";
+    a.click();
+  }
+
+  async function clearMediaRecord(id) {
+    if (!confirm("Remove this media item from Sonara?")) return;
+    const t = track(id);
+    if (t?.uri?.startsWith("blob:")) URL.revokeObjectURL(t.uri);
+    state.tracks = state.tracks.filter((x) => x.id !== id);
+    state.queue = state.queue.filter((x) => x !== id);
+    state.recent = state.recent.filter((x) => x !== id);
+    if (state.current === id) state.current = state.tracks.find((x) => x.kind === "audio")?.id || "demo";
+    if (state.viewerId === id) {
+      state.viewerId = null;
+      state.modal = null;
+    }
+    await save();
+    render();
+    showToast("Media removed");
+  }
+
+  async function resetLocalLibrary() {
+    if (!confirm("Reset your entire local Sonara media library?")) return;
+    state.tracks.forEach((t) => {
+      if (t.uri?.startsWith("blob:")) URL.revokeObjectURL(t.uri);
+    });
+    const db = await openDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(["media", "tracks", "settings"], "readwrite");
+      tx.objectStore("media").clear();
+      tx.objectStore("tracks").clear();
+      tx.objectStore("settings").clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+    state.tracks = [normalizeMedia({ ...DEMO })];
+    state.queue = ["demo"];
+    state.recent = [];
+    state.collections = [];
+    state.current = "demo";
+    state.videoId = null;
+    state.viewerId = null;
+    state.modal = null;
+    await save();
+    render();
+    showToast("Local library reset");
+  }
+
+  function bind() {
+    document.querySelectorAll("[data-create-collection]").forEach((b) => (b.onclick = () => createCollection($("#collectionName")?.value || "")));
+    document.querySelectorAll("[data-filter]").forEach((b) => (b.onclick = () => { state.filter = b.dataset.filter; render(); }));
+    document.querySelectorAll("[data-view]").forEach((b) => (b.onclick = () => { state.viewMode = b.dataset.view; render(); }));
+    document.querySelectorAll("[data-sort]").forEach((s) => (s.onchange = (e) => { state.sort = e.target.value; render(); }));
+    document.querySelectorAll("[data-group]").forEach((s) => (s.onchange = (e) => { state.groupBy = e.target.value; render(); }));
+    document.querySelectorAll("[data-open-media]").forEach((b) => (b.onclick = (e) => {
+      if (e.target.closest("[data-favorite]")) return;
+      openMedia(b.dataset.openMedia);
+    }));
+    document.querySelectorAll("[data-favorite]").forEach((b) => (b.onclick = (e) => {
+      e.stopPropagation();
+      toggleFavorite(b.dataset.favorite);
+    }));
+    document.querySelectorAll("[data-download]").forEach((b) => (b.onclick = () => downloadLocalMedia(b.dataset.download)));
+    document.querySelectorAll("[data-remove]").forEach((b) => (b.onclick = () => clearMediaRecord(b.dataset.remove)));
+    document.querySelectorAll("[data-spotify-connect]").forEach((b) => (b.onclick = () => spotifyConnect().catch((e) => alert(e.message))));
+    document.querySelectorAll("[data-spotify-refresh]").forEach((b) => (b.onclick = () => spotifyLoadPlaylists().then(render).catch((e) => alert(e.message))));
+    document.querySelectorAll("[data-spotify-import]").forEach((b) => (b.onclick = () => spotifyImportPlaylist(b.dataset.spotifyImport).catch((e) => alert(e.message))));
+    document.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => { state.tab = b.dataset.tab; state.modal = null; render(); }));
+    document.querySelectorAll("[data-play]").forEach((b) => (b.onclick = () => play(b.dataset.play)));
+    document.querySelectorAll("[data-add]").forEach((b) => (b.onclick = (e) => {
+      e.stopPropagation();
+      if (!state.queue.includes(b.dataset.add)) state.queue.push(b.dataset.add);
+      save();
+      render();
+      showToast("Added to queue");
+    }));
+    document.querySelectorAll("[data-import]").forEach((b) => (b.onclick = () => {
+      const i = document.createElement("input");
+      i.type = "file";
+      i.accept = "audio/*,video/*,image/*,.pdf,.txt,.md,.epub,.rtf,.doc,.docx,.mkv,.mp4,.webm,.mov,.mp3,.wav,.m4a,.flac,.ogg,.aac,.webp,.heic,.jpg,.jpeg,.png";
+      i.multiple = true;
+      i.onchange = () => importMediaFiles(i.files);
+      i.click();
+    }));
+    document.querySelectorAll("[data-import-video]").forEach((b) => (b.onclick = () => {
+      const i = document.createElement("input");
+      i.type = "file";
+      i.accept = "video/*,.mkv,.mp4,.webm,.mov,.m4v";
+      i.multiple = true;
+      i.onchange = () => importMediaFiles(i.files);
+      i.click();
+    }));
+    document.querySelectorAll("[data-video]").forEach((b) => (b.onclick = () => { state.videoId = b.dataset.video; save(); render(); }));
+    document.querySelectorAll("[data-player]").forEach((b) => (b.onclick = () => { state.modal = "player"; render(); }));
+    document.querySelectorAll("[data-close]").forEach((b) => (b.onclick = () => { state.modal = null; state.viewerId = null; render(); }));
+    // sort / group / view handled via data- attributes
+    document.querySelectorAll("[data-toggle]").forEach((b) => (b.onclick = toggle));
+    document.querySelectorAll("[data-next]").forEach((b) => (b.onclick = () => next(1)));
+    document.querySelectorAll("[data-prev]").forEach((b) => (b.onclick = () => next(-1)));
+    document.querySelectorAll("[data-seek]").forEach((b) => (b.onclick = () => {
+      audio.currentTime = Math.max(0, Math.min(audio.duration || 0, audio.currentTime + Number(b.dataset.seek)));
+      render();
+    }));
+    document.querySelectorAll("[data-shuffle]").forEach((b) => (b.onclick = () => { state.shuffle = !state.shuffle; render(); }));
+    document.querySelectorAll("[data-repeat]").forEach((b) => (b.onclick = () => { state.repeat = !state.repeat; audio.loop = state.repeat; render(); }));
+    document.querySelectorAll("[data-lyrics]").forEach((b) => (b.onclick = () => { state.modal = "lyrics"; render(); }));
+    
+    document.querySelectorAll("[data-eq-toggle]").forEach((b) => (b.onclick = () => toggleEQ()));
+    document.querySelectorAll("[data-eq-preset]").forEach((b) => (b.onclick = () => {
+      const name = b.dataset.eqPreset;
+      if (name === "custom") return;
+      setEQPreset(name);
+    }));
+    document.querySelectorAll("[data-eq-band]").forEach((input) => {
+      input.oninput = (e) => {
+        const i = Number(input.dataset.eqBand);
+        setEQBand(i, e.target.value);
+        // live update label without full re-render for smoothness
+        const gainEl = input.parentElement.querySelector(".eq-gain");
+        if (gainEl) {
+          const g = Number(e.target.value);
+          gainEl.textContent = (g > 0 ? "+" : "") + g;
+        }
+      };
+      input.onchange = () => render();
+    });
+    document.querySelectorAll("[data-autoplay]").forEach((b) => (b.onclick = () => { state.autoplay = !state.autoplay; save(); render(); }));
+    document.querySelectorAll("[data-reset]").forEach((b) => (b.onclick = resetLocalLibrary));
+    const search = $(".search");
+    if (search && search.placeholder === "Search all local media") {
+      search.oninput = (e) => {
+        state.query = e.target.value;
+        render();
+        const s = $(".search");
+        if (s) {
+          s.focus();
+          s.setSelectionRange(state.query.length, state.query.length);
+        }
+      };
+    }
+  }
+
+  // Keyboard shortcuts
+  document.addEventListener("keydown", (e) => {
+    if (e.target.matches("input, textarea, select")) return;
+    if (e.code === "Space") {
+      e.preventDefault();
+      toggle();
+    } else if (e.code === "ArrowRight") next(1);
+    else if (e.code === "ArrowLeft") next(-1);
+    else if (e.code === "Escape" && state.modal) {
+      state.modal = null;
+      state.viewerId = null;
+      render();
+    }
+  });
+
+  audio.onplay = () => { state.playing = true; };
+  audio.onpause = () => { state.playing = false; };
+  audio.ontimeupdate = () => {
+    if (state.modal === "player") {
+      const p = document.querySelector(".progress i");
+      const t = document.querySelector(".time");
+      if (p) p.style.width = `${audio.duration ? Math.min(100, (audio.currentTime / audio.duration) * 100) : 0}%`;
+      if (t) t.innerHTML = `<span>${fmt(audio.currentTime)}</span><span>${fmt(audio.duration)}</span>`;
+    }
+  };
+  audio.onended = () => {
+    if (state.repeat) {
+      audio.currentTime = 0;
+      audio.play();
+    } else if (state.autoplay) next(1);
+  };
+
+  // Boot
+  render();
+  load()
+    .then(() => spotifyCallback().catch((e) => console.warn(e)))
+    .then(render)
+    .catch(() => render());
+})();
+</script>
+</body>
+</html>

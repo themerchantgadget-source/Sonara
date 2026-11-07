@@ -251,3 +251,98 @@ export function findActiveLyricIndex(lyrics: LyricLine[], currentTime: number): 
   }
   return active;
 }
+
+/**
+ * Generates an array of normalized audio waveform peaks (between 0.15 and 1.0)
+ * deterministically based on seed string and song structure harmonics.
+ * Used for instant, stutter-free visualization before or alongside PCM decoding.
+ */
+export function generateDeterministicPeaks(seed: string, count: number = 72): number[] {
+  const safeCount = Math.max(16, Math.min(256, count));
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 37 + seed.charCodeAt(i)) & 0xffffffff;
+  }
+
+  const peaks: number[] = new Array(safeCount);
+  for (let i = 0; i < safeCount; i++) {
+    const t = i / (safeCount - 1); // 0 to 1
+
+    // Overall dynamic envelope of typical music (intro -> verse -> chorus -> bridge -> outro)
+    const envelope =
+      0.35 +
+      0.65 * Math.sin(t * Math.PI) * Math.cos((t - 0.5) * 1.2);
+
+    // Multi-frequency harmonic variation
+    const freq1 = Math.sin(t * 14 + (hash % 17));
+    const freq2 = Math.sin(t * 29 + ((hash >> 4) % 19));
+    const freq3 = Math.cos(t * 53 + ((hash >> 8) % 23));
+
+    // Pseudo-random micro-detail
+    const pseudoNoise = Math.sin(i * 1337 + hash) * 0.18;
+
+    const raw = envelope * (0.55 + 0.25 * freq1 + 0.15 * freq2 + 0.08 * freq3 + pseudoNoise);
+    const clamped = Math.max(0.16, Math.min(1.0, Math.abs(raw)));
+    peaks[i] = Number(clamped.toFixed(3));
+  }
+
+  return peaks;
+}
+
+/**
+ * Extracts normalized peak amplitudes from a decoded AudioBuffer across channels.
+ */
+export function extractAudioPeaksFromBuffer(
+  channelDataList: Float32Array[],
+  barCount: number = 72,
+): number[] {
+  if (!channelDataList.length || !channelDataList[0].length) {
+    return generateDeterministicPeaks('fallback', barCount);
+  }
+
+  const totalSamples = channelDataList[0].length;
+  const channelCount = channelDataList.length;
+  const bucketSize = Math.floor(totalSamples / barCount);
+  if (bucketSize < 1) {
+    return generateDeterministicPeaks('short', barCount);
+  }
+
+  const rawPeaks = new Float32Array(barCount);
+  let maxPeak = 0.001;
+
+  for (let bar = 0; bar < barCount; bar++) {
+    const start = bar * bucketSize;
+    const end = Math.min(start + bucketSize, totalSamples);
+    let sumSquares = 0;
+    let count = 0;
+
+    // Calculate RMS across all channels
+    for (let c = 0; c < channelCount; c++) {
+      const channel = channelDataList[c];
+      // Step through with a stride to balance speed and accuracy
+      const stride = Math.max(1, Math.floor((end - start) / 100));
+      for (let s = start; s < end; s += stride) {
+        const val = channel[s];
+        sumSquares += val * val;
+        count++;
+      }
+    }
+
+    const rms = count > 0 ? Math.sqrt(sumSquares / count) : 0;
+    rawPeaks[bar] = rms;
+    if (rms > maxPeak) {
+      maxPeak = rms;
+    }
+  }
+
+  // Normalize to 0.15 - 1.0 range
+  const normalized: number[] = new Array(barCount);
+  for (let bar = 0; bar < barCount; bar++) {
+    const norm = rawPeaks[bar] / maxPeak;
+    const scaled = 0.16 + norm * 0.84;
+    normalized[bar] = Number(Math.max(0.16, Math.min(1.0, scaled)).toFixed(3));
+  }
+
+  return normalized;
+}
+

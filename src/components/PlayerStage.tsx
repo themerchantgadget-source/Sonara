@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import type { MediaItem } from '../types/media';
 import { computeHue, formatDuration } from '../utils/media';
+import { AudioWaveform } from './AudioWaveform';
 
 interface PlayerStageProps {
   currentItem: MediaItem | null;
@@ -211,7 +212,7 @@ export const PlayerStage: React.FC<PlayerStageProps> = ({
               <>
                 <div
                   aria-hidden="true"
-                  className="w-full max-w-[320px] sm:max-w-[340px] max-h-[35vh] aspect-square rounded-[22px] grid place-items-center font-serif text-[104px] sm:text-[120px] mx-auto select-none shadow-xl"
+                  className="w-full max-w-[280px] sm:max-w-[320px] max-h-[26vh] sm:max-h-[32vh] aspect-square rounded-[22px] grid place-items-center font-serif text-[96px] sm:text-[112px] mx-auto select-none shadow-xl"
                   style={{
                     backgroundColor: `hsl(${hue} 26% 23%)`,
                     color: `hsl(${hue} 65% 80%)`,
@@ -244,36 +245,62 @@ export const PlayerStage: React.FC<PlayerStageProps> = ({
               </div>
             </div>
 
-            <div>
-              <input
-                type="range"
-                min={0}
-                max={1000}
-                value={seekValue}
-                aria-label="Seek"
-                onChange={(e) => onSeekInput(Number(e.target.value) / 1000)}
-                onMouseUp={(e) =>
-                  onSeekCommit(
-                    Number((e.target as HTMLInputElement).value) / 1000,
-                  )
-                }
-                onTouchEnd={(e) =>
-                  onSeekCommit(
-                    Number((e.target as HTMLInputElement).value) / 1000,
-                  )
-                }
-                onKeyUp={(e) =>
-                  onSeekCommit(
-                    Number((e.target as HTMLInputElement).value) / 1000,
-                  )
-                }
-                className="sonara-seek w-full h-7 m-0"
-              />
-              <div className="flex justify-between text-[#a09b90] text-[11px] font-mono tabular-nums -mt-1">
-                <span>{formatDuration(currentTime)}</span>
-                <span>{formatDuration(duration)}</span>
+            {/* Progress Section: HTML5 Canvas Waveform for Audio, Scrubber for Video */}
+            {currentItem.type === 'audio' ? (
+              <div className="flex flex-col gap-2">
+                <div className="w-full h-[76px] p-2 rounded-2xl bg-[#141413] border border-white/5 flex items-center shadow-inner">
+                  <AudioWaveform
+                    blob={currentItem.blob}
+                    trackId={currentItem.id}
+                    title={currentItem.title}
+                    currentTime={currentTime}
+                    duration={duration}
+                    isPlaying={isPlaying}
+                    accentColor="#d97757"
+                    onSeekInput={onSeekInput}
+                    onSeekCommit={onSeekCommit}
+                  />
+                </div>
+                <div className="flex justify-between items-center text-[#a09b90] text-[11px] font-mono tabular-nums px-1 select-none">
+                  <span>{formatDuration(currentTime)}</span>
+                  <span className="text-[10px] tracking-wider uppercase text-[#a09b90]/60">
+                    Waveform
+                  </span>
+                  <span>{formatDuration(duration)}</span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div>
+                <input
+                  type="range"
+                  min={0}
+                  max={1000}
+                  value={seekValue}
+                  aria-label="Seek"
+                  onChange={(e) => onSeekInput(Number(e.target.value) / 1000)}
+                  onMouseUp={(e) =>
+                    onSeekCommit(
+                      Number((e.target as HTMLInputElement).value) / 1000,
+                    )
+                  }
+                  onTouchEnd={(e) =>
+                    onSeekCommit(
+                      Number((e.target as HTMLInputElement).value) / 1000,
+                    )
+                  }
+                  onKeyUp={(e) =>
+                    onSeekCommit(
+                      Number((e.target as HTMLInputElement).value) / 1000,
+                    )
+                  }
+                  className="sonara-seek w-full h-7 m-0"
+                />
+                <div className="flex justify-between text-[#a09b90] text-[11px] font-mono tabular-nums -mt-1">
+                  <span>{formatDuration(currentTime)}</span>
+                  <span>{formatDuration(duration)}</span>
+                </div>
+              </div>
+            )}
 
             {/* Transport Controls */}
             <div className="flex justify-center items-center gap-6 sm:gap-7">

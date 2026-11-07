@@ -561,6 +561,23 @@ export default function App() {
   // Keyboard shortcuts & drag-and-drop
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      // Hardware and media keyboard keys
+      if (e.key === 'MediaPlayPause' || e.code === 'MediaPlayPause') {
+        e.preventDefault();
+        togglePlay();
+        return;
+      }
+      if (e.key === 'MediaTrackNext' || e.code === 'MediaTrackNext') {
+        e.preventDefault();
+        stepTrack(1);
+        return;
+      }
+      if (e.key === 'MediaTrackPrevious' || e.code === 'MediaTrackPrevious') {
+        e.preventDefault();
+        stepTrack(-1);
+        return;
+      }
+
       const target = e.target as HTMLElement | null;
       if (
         target &&

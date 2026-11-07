@@ -3,10 +3,12 @@ import assert from 'node:assert/strict';
 import {
   computeHue,
   detectMediaType,
+  extractAudioPeaksFromBuffer,
   filterAndSortMedia,
   findActiveLyricIndex,
   formatDuration,
   formatFileSize,
+  generateDeterministicPeaks,
   matchSpotifyTrack,
   nextPlaybackSpeed,
   normalizeText,
@@ -184,3 +186,41 @@ test('filterAndSortMedia sorts alphabetically and by recent', () => {
   const sortedNewest = filterAndSortMedia(items, 'songs', '');
   assert.equal(sortedNewest[0].id, '2'); // added 200 is newest
 });
+
+test('generateDeterministicPeaks generates consistent, non-empty, clamped peaks', () => {
+  const peaks1 = generateDeterministicPeaks('song-id-123', 60);
+  const peaks2 = generateDeterministicPeaks('song-id-123', 60);
+  assert.equal(peaks1.length, 60);
+  assert.deepEqual(peaks1, peaks2); // deterministic
+
+  // Values should be between 0.15 and 1.0
+  for (const val of peaks1) {
+    assert.ok(val >= 0.15 && val <= 1.0, `Peak value ${val} out of expected range`);
+  }
+
+  // Different seeds produce different peak profiles
+  const peaksDifferent = generateDeterministicPeaks('another-song-456', 60);
+  assert.notDeepEqual(peaks1, peaksDifferent);
+});
+
+test('extractAudioPeaksFromBuffer extracts normalized peaks from channel PCM data', () => {
+  // Synthesize a sine burst PCM channel
+  const samples = 44100;
+  const channelData = new Float32Array(samples);
+  for (let i = 0; i < samples; i++) {
+    // Louder in the middle, quiet at ends
+    const env = Math.sin((i / samples) * Math.PI);
+    channelData[i] = Math.sin(2 * Math.PI * 440 * (i / 44100)) * env;
+  }
+
+  const peaks = extractAudioPeaksFromBuffer([channelData], 32);
+  assert.equal(peaks.length, 32);
+
+  // Peak in middle should be higher than beginning/end
+  const middle = peaks[16];
+  const start = peaks[0];
+  const end = peaks[31];
+  assert.ok(middle > start, `Middle peak (${middle}) should exceed start peak (${start})`);
+  assert.ok(middle > end, `Middle peak (${middle}) should exceed end peak (${end})`);
+});
+
