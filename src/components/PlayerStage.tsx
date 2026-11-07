@@ -155,80 +155,16 @@ export const PlayerStage: React.FC<PlayerStageProps> = ({
           className="flex-1 flex flex-col justify-center gap-4 sm:gap-5 px-6 sm:px-10 pt-[calc(72px+env(safe-area-inset-top))] md:pt-6 pb-[calc(24px+env(safe-area-inset-bottom))] min-h-0 overflow-y-auto"
         >
           <div className="max-w-md w-full mx-auto flex flex-col gap-4 sm:gap-5 my-auto">
-            {currentItem.type === 'video' ? (
-              <div className="relative w-full aspect-[16/10] rounded-2xl overflow-hidden bg-black group">
-                <video
-                  ref={videoRef}
-                  playsInline
-                  preload="metadata"
-                  className="w-full h-full object-contain"
-                />
-
-                {/* Video Quick Action Overlay on hover/touch */}
-                <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-center justify-between text-white text-xs opacity-90 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => onSkipTime(-10)}
-                      aria-label="Skip back 10 seconds"
-                      className="p-1.5 rounded-lg bg-black/40 hover:bg-black/60 transition-colors cursor-pointer"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onSkipTime(10)}
-                      aria-label="Skip forward 10 seconds"
-                      className="p-1.5 rounded-lg bg-black/40 hover:bg-black/60 transition-colors cursor-pointer"
-                    >
-                      <RotateCw className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={onToggleMute}
-                      aria-label={isMuted ? 'Unmute video' : 'Mute video'}
-                      className="p-1.5 rounded-lg bg-black/40 hover:bg-black/60 transition-colors cursor-pointer"
-                    >
-                      {isMuted ? (
-                        <VolumeX className="w-4 h-4 text-red-400" />
-                      ) : (
-                        <Volume2 className="w-4 h-4" />
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={onToggleFullscreen}
-                      aria-label="Fullscreen"
-                      className="p-1.5 rounded-lg bg-black/40 hover:bg-black/60 transition-colors cursor-pointer"
-                    >
-                      <Maximize2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div
-                  aria-hidden="true"
-                  className="w-full max-w-[280px] sm:max-w-[320px] max-h-[26vh] sm:max-h-[32vh] aspect-square rounded-[22px] grid place-items-center font-serif text-[96px] sm:text-[112px] mx-auto select-none shadow-xl"
-                  style={{
-                    backgroundColor: `hsl(${hue} 26% 23%)`,
-                    color: `hsl(${hue} 65% 80%)`,
-                  }}
-                >
-                  {currentItem.title[0]?.toUpperCase() || '♪'}
-                </div>
-                {/* Hidden video element reused for audio playback */}
-                <video
-                  ref={videoRef}
-                  playsInline
-                  preload="metadata"
-                  className="hidden"
-                />
-              </>
-            )}
+            <div
+              aria-hidden="true"
+              className="w-full max-w-[280px] sm:max-w-[320px] max-h-[26vh] sm:max-h-[32vh] aspect-square rounded-[22px] grid place-items-center font-serif text-[96px] sm:text-[112px] mx-auto select-none shadow-xl"
+              style={{
+                backgroundColor: `hsl(${hue} 26% 23%)`,
+                color: `hsl(${hue} 65% 80%)`,
+              }}
+            >
+              {currentItem.title[0]?.toUpperCase() || '♪'}
+            </div>
 
             <div className="flex items-center justify-between gap-3 min-w-0">
               <div className="min-w-0">

@@ -1,10 +1,17 @@
-export type MediaType = 'audio' | 'video';
+export type MediaType = 'audio' | 'video' | 'photo' | 'document';
 
-export type LibraryTab = 'songs' | 'videos' | 'lists';
+export type LibraryTab = 'all' | 'songs' | 'videos' | 'photos' | 'documents' | 'lists';
 
 export type LibraryViewMode = 'list' | 'hero';
 
-export type AppNavSpace = 'home' | 'music' | 'video' | 'library' | 'settings';
+export type AppNavSpace =
+  | 'home'
+  | 'music'
+  | 'video'
+  | 'photos'
+  | 'documents'
+  | 'library'
+  | 'settings';
 
 export interface MediaItem {
   id: string;
@@ -29,6 +36,13 @@ export interface LyricLine {
   text: string;
 }
 
+export interface SubtitleCue {
+  id: string;
+  start: number;
+  end: number;
+  text: string;
+}
+
 export interface EqualizerPreset {
   name: string;
   values: [number, number, number, number, number];
@@ -41,4 +55,7 @@ export interface UserPreferences {
   autoPlayNext: boolean;
   normalizeAudio: boolean;
   showTimeRemaining: boolean;
+  inlineVideoOnly: boolean;
+  audioBoostPercent: number; // 100 to 200
 }
+

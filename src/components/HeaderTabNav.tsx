@@ -1,5 +1,13 @@
 import React from 'react';
-import { Film, FolderArchive, Home, Music, Settings, Volume2 } from 'lucide-react';
+import {
+  FileText,
+  Film,
+  FolderArchive,
+  Home,
+  Image as ImageIcon,
+  Music,
+  Settings,
+} from 'lucide-react';
 import type { AppNavSpace, MediaItem } from '../types/media';
 
 interface HeaderTabNavProps {
@@ -15,7 +23,6 @@ export const HeaderTabNav: React.FC<HeaderTabNavProps> = ({
   onSelectSpace,
   currentItem,
   isPlaying,
-  onQuickTogglePlay,
 }) => {
   const tabs = [
     {
@@ -28,25 +35,37 @@ export const HeaderTabNav: React.FC<HeaderTabNavProps> = ({
       id: 'music' as const,
       label: 'Music',
       icon: Music,
-      description: 'Music player space',
+      description: 'Music space (Sonara Spotify)',
     },
     {
       id: 'video' as const,
       label: 'Video',
       icon: Film,
-      description: 'Video player space',
+      description: 'Video player space (Sonara VLC)',
+    },
+    {
+      id: 'photos' as const,
+      label: 'Photos',
+      icon: ImageIcon,
+      description: 'Photos gallery space',
+    },
+    {
+      id: 'documents' as const,
+      label: 'Documents',
+      icon: FileText,
+      description: 'Documents reader space',
     },
     {
       id: 'library' as const,
       label: 'Library',
       icon: FolderArchive,
-      description: 'Categorized total media library',
+      description: 'Universal media library',
     },
     {
       id: 'settings' as const,
       label: 'Settings',
       icon: Settings,
-      description: 'Preferences & customization',
+      description: 'Preferences, connectors & equalizer',
     },
   ];
 
@@ -71,7 +90,7 @@ export const HeaderTabNav: React.FC<HeaderTabNavProps> = ({
         <nav
           role="tablist"
           aria-label="Application spaces"
-          className="flex items-center gap-1 sm:gap-2 p-1 rounded-2xl bg-[#1c1c1e] border border-white/5 shadow-inner"
+          className="flex items-center gap-0.5 sm:gap-1.5 p-1 rounded-2xl bg-[#1c1c1e] border border-white/5 shadow-inner overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden shrink-0"
         >
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -88,8 +107,8 @@ export const HeaderTabNav: React.FC<HeaderTabNavProps> = ({
                 onClick={() => onSelectSpace(tab.id)}
                 className={`
                   relative flex items-center justify-center
-                  min-w-[42px] sm:min-w-[48px] h-10 sm:h-11 px-2.5 sm:px-3 rounded-xl
-                  transition-all duration-200 cursor-pointer
+                  min-w-[40px] sm:min-w-[46px] h-10 sm:h-11 px-2 sm:px-2.5 rounded-xl
+                  transition-all duration-200 cursor-pointer shrink-0
                   ${
                     isActive
                       ? 'bg-[#272729] text-[#f5f2ea] shadow-sm'

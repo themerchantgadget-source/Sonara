@@ -1,4 +1,4 @@
-import type { LyricLine, MediaType, PlaylistRecord } from '../types/media';
+import type { LyricLine, MediaType, PlaylistRecord, SubtitleCue } from '../types/media';
 
 export const PLAYBACK_SPEEDS = [1, 1.25, 1.5, 2, 0.75] as const;
 
@@ -12,8 +12,10 @@ export const EQ_PRESETS: Record<string, [number, number, number, number, number]
   Rock: [5, 3, -1, 3, 6],
 };
 
-const AUDIO_EXT_RE = /\.(mp3|m4a|aac|wav|ogg|opus|flac)$/i;
-const VIDEO_EXT_RE = /\.(mp4|mov|m4v|webm|mkv)$/i;
+const AUDIO_EXT_RE = /\.(mp3|m4a|aac|wav|ogg|opus|flac|weba)$/i;
+const VIDEO_EXT_RE = /\.(mp4|mov|m4v|webm|mkv|ogv)$/i;
+const PHOTO_EXT_RE = /\.(jpg|jpeg|png|webp|gif|svg|avif|bmp|ico)$/i;
+const DOC_EXT_RE = /\.(pdf|txt|md|markdown|lrc|srt|vtt|json|csv|rtf)$/i;
 
 export function nextPlaybackSpeed(current: number): number {
   const idx = PLAYBACK_SPEEDS.indexOf(current as (typeof PLAYBACK_SPEEDS)[number]);
@@ -68,6 +70,16 @@ export function detectMediaType(filename: string, mimeType: string): MediaType |
   }
   if (mimeType.startsWith('audio/') || AUDIO_EXT_RE.test(filename)) {
     return 'audio';
+  }
+  if (mimeType.startsWith('image/') || PHOTO_EXT_RE.test(filename)) {
+    return 'photo';
+  }
+  if (
+    mimeType === 'application/pdf' ||
+    mimeType.startsWith('text/') ||
+    DOC_EXT_RE.test(filename)
+  ) {
+    return 'document';
   }
   return null;
 }
@@ -189,18 +201,128 @@ export function stepQueueIndex(
 
 export function filterAndSortMedia<
   T extends { id: string; type: MediaType; title: string; artist: string; added: number },
->(items: T[], tab: 'songs' | 'videos', query: string): T[] {
-  const targetType: MediaType = tab === 'videos' ? 'video' : 'audio';
+>(
+  items: T[],
+  tab: 'all' | 'songs' | 'videos' | 'photos' | 'documents',
+  query: string,
+): T[] {
   const q = query.trim().toLowerCase();
 
   return items
-    .filter(
-      (item) =>
-        item.type === targetType &&
-        (!q || `${item.title} ${item.artist}`.toLowerCase().includes(q)),
-    )
+    .filter((item) => {
+      let matchesTab = true;
+      if (tab === 'songs') matchesTab = item.type === 'audio';
+      else if (tab === 'videos') matchesTab = item.type === 'video';
+      else if (tab === 'photos') matchesTab = item.type === 'photo';
+      else if (tab === 'documents') matchesTab = item.type === 'document';
+
+      if (!matchesTab) return false;
+      if (!q) return true;
+      return `${item.title} ${item.artist}`.toLowerCase().includes(q);
+    })
     .sort((a, b) => b.added - a.added);
 }
+
+/**
+ * Parses timestamp string to seconds.
+ * Supports: "01:23.456", "01:23,456", "01:02:03.456", "01:02:03,456"
+ */
+export function parseTimestampToSeconds(timeStr: string): number {
+  const normalized = timeStr.trim().replace(',', '.');
+  const parts = normalized.split(':');
+  if (parts.length === 3) {
+    const h = Number(parts[0]) || 0;
+    const m = Number(parts[1]) || 0;
+    const s = Number(parts[2]) || 0;
+    return h * 3600 + m * 60 + s;
+  }
+  if (parts.length === 2) {
+    const m = Number(parts[0]) || 0;
+    const s = Number(parts[1]) || 0;
+    return m * 60 + s;
+  }
+  return Number(normalized) || 0;
+}
+
+/**
+ * Parses Subtitles (SRT, WebVTT, or LRC) into synchronized cues.
+ */
+export function parseSubtitles(raw: string): SubtitleCue[] {
+  if (!raw || !raw.trim()) return [];
+
+  // Check if it's LRC format
+  if (raw.includes('[') && /\[\d{2}:\d{2}/.test(raw)) {
+    const lrcLines = parseLrcLyrics(raw);
+    const cues: SubtitleCue[] = [];
+    for (let i = 0; i < lrcLines.length; i++) {
+      const cur = lrcLines[i];
+      const nextTime = i < lrcLines.length - 1 ? lrcLines[i + 1].time : cur.time + 4;
+      cues.push({
+        id: `cue-${i}`,
+        start: cur.time,
+        end: Math.max(cur.time + 1, nextTime),
+        text: cur.text,
+      });
+    }
+    return cues;
+  }
+
+  // Standard SRT or WebVTT parser
+  const cleaned = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const blocks = cleaned.split(/\n\s*\n/);
+  const cues: SubtitleCue[] = [];
+  let cueIndex = 1;
+
+  for (const block of blocks) {
+    const lines = block.trim().split('\n');
+    if (!lines.length) continue;
+
+    // Find the arrow line: e.g. "00:01:20,000 --> 00:01:24,000"
+    const arrowIdx = lines.findIndex((l) => l.includes('-->'));
+    if (arrowIdx === -1) continue;
+
+    const arrowLine = lines[arrowIdx];
+    const match = arrowLine.match(
+      /((?:\d{1,2}:)?\d{2}:\d{2}[,.]\d{1,3})\s*-->\s*((?:\d{1,2}:)?\d{2}:\d{2}[,.]\d{1,3})/,
+    );
+    if (!match) continue;
+
+    const startSec = parseTimestampToSeconds(match[1]);
+    const endSec = parseTimestampToSeconds(match[2]);
+
+    const textLines = lines.slice(arrowIdx + 1);
+    const text = textLines
+      .join(' ')
+      .replace(/<[^>]+>/g, '') // strip HTML/VTT styling tags
+      .trim();
+
+    if (!text) continue;
+
+    cues.push({
+      id: `cue-${cueIndex++}`,
+      start: Number(startSec.toFixed(3)),
+      end: Number(endSec.toFixed(3)),
+      text,
+    });
+  }
+
+  cues.sort((a, b) => a.start - b.start);
+  return cues;
+}
+
+/**
+ * Finds the currently active subtitle cue for a given playback time with optional offset.
+ */
+export function findActiveSubtitleCue(
+  cues: SubtitleCue[],
+  currentTime: number,
+  offsetSeconds: number = 0,
+): SubtitleCue | null {
+  if (!cues.length || !Number.isFinite(currentTime)) return null;
+  const time = currentTime + offsetSeconds;
+  return cues.find((c) => time >= c.start && time <= c.end) || null;
+}
+
 
 /**
  * Parses LRC synchronized lyrics text into sorted time-tagged lines.

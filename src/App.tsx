@@ -1,16 +1,19 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { ConfirmRemoveModal } from './components/ConfirmRemoveModal';
+import { DocumentsWorkspace } from './components/DocumentsWorkspace';
 import { EqualizerModal } from './components/EqualizerModal';
 import { FloatingNowPlaying } from './components/FloatingNowPlaying';
 import { HeaderTabNav } from './components/HeaderTabNav';
 import { HomeScreen } from './components/HomeScreen';
-import { LibraryOverviewSpace } from './components/LibraryOverviewSpace';
 import { LibrarySidebar } from './components/LibrarySidebar';
 import { LyricsModal } from './components/LyricsModal';
+import { PhotosWorkspace } from './components/PhotosWorkspace';
 import { PlayerStage } from './components/PlayerStage';
 import { QueueModal } from './components/QueueModal';
 import { SettingsSpace } from './components/SettingsSpace';
+import { UniversalLibrary } from './components/UniversalLibrary';
+import { VideoWorkspace } from './components/VideoWorkspace';
 import type {
   AppNavSpace,
   LibraryTab,
@@ -44,6 +47,8 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   autoPlayNext: true,
   normalizeAudio: true,
   showTimeRemaining: false,
+  inlineVideoOnly: true,
+  audioBoostPercent: 100,
 };
 
 export default function App() {
@@ -88,9 +93,10 @@ export default function App() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const jsonInputRef = useRef<HTMLInputElement | null>(null);
 
-  // WebAudio nodes for Equalizer
+  // WebAudio nodes for Equalizer & Audio Boost
   const audioContextRef = useRef<AudioContext | null>(null);
   const eqFiltersRef = useRef<BiquadFilterNode[]>([]);
+  const gainNodeRef = useRef<GainNode | null>(null);
   const audioSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
 
   const showToast = useCallback((message: string) => {
@@ -135,7 +141,7 @@ export default function App() {
   const pendingRemoveItem =
     items.find((item) => item.id === pendingRemoveId) || null;
 
-  // Initialize WebAudio Equalizer on demand
+  // Initialize WebAudio Equalizer & Gain Node on demand
   const initEqualizer = useCallback(async () => {
     if (audioContextRef.current) {
       if (audioContextRef.current.state === 'suspended') {
@@ -169,6 +175,10 @@ export default function App() {
       });
       eqFiltersRef.current = filters;
 
+      const gain = ctx.createGain();
+      gain.gain.value = (preferences.audioBoostPercent || 100) / 100;
+      gainNodeRef.current = gain;
+
       const source = ctx.createMediaElementSource(videoEl);
       audioSourceRef.current = source;
 
@@ -176,13 +186,14 @@ export default function App() {
       for (let i = 0; i < filters.length - 1; i++) {
         filters[i].connect(filters[i + 1]);
       }
-      filters[filters.length - 1].connect(ctx.destination);
+      filters[filters.length - 1].connect(gain);
+      gain.connect(ctx.destination);
 
       setIsEqEnabled(true);
     } catch {
       // Audio element might already be connected or blocked
     }
-  }, [showToast]);
+  }, [preferences.audioBoostPercent, showToast]);
 
   const handleGainChange = useCallback(
     async (index: number, value: number) => {
@@ -451,6 +462,18 @@ export default function App() {
     }
   }, [stepTrack]);
 
+  const handleSetAudioBoost = useCallback(
+    async (boostPercent: number) => {
+      await initEqualizer();
+      handleUpdatePreferences({ audioBoostPercent: boostPercent });
+      if (gainNodeRef.current) {
+        gainNodeRef.current.gain.value = boostPercent / 100;
+      }
+      showToast(`Audio Boost set to ${boostPercent}%`);
+    },
+    [initEqualizer, handleUpdatePreferences, showToast],
+  );
+
   const importFiles = useCallback(
     async (fileList: File[]) => {
       const added: MediaItem[] = [];
@@ -479,53 +502,95 @@ export default function App() {
       }
 
       if (!added.length) {
-        showToast('Those files aren’t audio or video');
+        showToast('Unsupported file format. Try Audio, Video, Photos (WEBP, PNG, JPG) or Documents (PDF, TXT, MD)');
         return;
       }
 
       setItems((prev) => [...prev, ...added]);
       const firstType = added[0].type;
-      setTab(firstType === 'video' ? 'videos' : 'songs');
       showToast(
-        `${added.length} ${added.length > 1 ? 'files' : 'file'} added${
+        `${added.length} ${added.length > 1 ? 'files' : 'file'} imported${
           dbRef.current ? '' : ' (this session only)'
         }`,
       );
 
-      if (!currentId) {
-        const sameTypeIds = added
-          .filter((x) => x.type === firstType)
-          .map((x) => x.id);
-        const first = added[0];
-        setCurrentId(first.id);
-        setActiveSpace(firstType === 'video' ? 'video' : 'music');
-        setTab(firstType === 'video' ? 'videos' : 'songs');
-        setQueue(sameTypeIds);
-        setIsDrawerOpen(false);
-        if (objectUrlRef.current) {
-          URL.revokeObjectURL(objectUrlRef.current);
+      // Route to sandboxed workspace based on media type
+      if (firstType === 'photo') {
+        setActiveSpace('photos');
+      } else if (firstType === 'document') {
+        setActiveSpace('documents');
+      } else if (firstType === 'video') {
+        setActiveSpace('video');
+        setTab('videos');
+        playTrack(added[0].id, added.map((x) => x.id), true);
+      } else if (firstType === 'audio') {
+        setActiveSpace('music');
+        setTab('songs');
+        if (!currentId) {
+          playTrack(added[0].id, added.map((x) => x.id), true);
         }
-        const nextUrl = URL.createObjectURL(first.blob);
-        objectUrlRef.current = nextUrl;
-        requestAnimationFrame(async () => {
-          const el = videoRef.current;
-          if (!el) return;
-          el.src = nextUrl;
-          el.loop = repeat;
-          el.playbackRate = speed;
-          el.muted = isMuted;
-          try {
-            await el.play();
-            setIsPlaying(true);
-          } catch {
-            setIsPlaying(false);
-            showToast('Tap play to start');
-          }
-        });
       }
     },
-    [currentId, repeat, speed, isMuted, showToast],
+    [currentId, playTrack, showToast],
   );
+
+  const importSpotifyJsonText = useCallback(
+    (rawJson: string) => {
+      try {
+        const parsed = parseSpotifyExport(rawJson, items);
+        if (!parsed.length) {
+          showToast('No playlists recognized in that text');
+          return;
+        }
+        let nextLists = [...lists];
+        let hit = 0;
+        let all = 0;
+        for (const pl of parsed) {
+          nextLists = nextLists.filter((existing) => existing.name !== pl.name);
+          nextLists.push(pl);
+          hit += pl.ids.length;
+          all += pl.total;
+        }
+        setLists(nextLists);
+        savePlaylists(nextLists);
+        showToast(
+          `Imported ${parsed.length} playlist${parsed.length > 1 ? 's' : ''} (${hit}/${all} local matches)`,
+        );
+      } catch {
+        showToast('Invalid JSON structure');
+      }
+    },
+    [items, lists, showToast],
+  );
+
+  const exportCatalogJson = useCallback(() => {
+    const backup = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      items: items.map(({ id, type, title, artist, name, size, mime, added }) => ({
+        id,
+        type,
+        title,
+        artist,
+        name,
+        size,
+        mime,
+        added,
+      })),
+      playlists: lists,
+    };
+    const jsonStr = JSON.stringify(backup, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sonara-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Catalog exported as JSON');
+  }, [items, lists, showToast]);
 
   const importSpotifyFiles = useCallback(
     async (fileList: File[]) => {
@@ -683,54 +748,85 @@ export default function App() {
           <HomeScreen
             items={items}
             playlists={lists}
-            onOpenMusic={() => handleSelectSpace('music')}
-            onOpenVideo={() => handleSelectSpace('video')}
-            onOpenPlaylists={() => handleSelectSpace('library')}
+            onOpenSpace={handleSelectSpace}
             onTriggerAddFiles={() => fileInputRef.current?.click()}
-            onPlayTrack={(id, q) => playTrack(id, q)}
           />
         )}
 
-        {/* Space 4: Categorized Total Master Library */}
+        {/* Space 4: Photos Workspace (Sonara Photos) */}
+        {activeSpace === 'photos' && (
+          <PhotosWorkspace
+            photoItems={items.filter((x) => x.type === 'photo')}
+            onAddFilesClick={() => fileInputRef.current?.click()}
+            onRemoveItem={(id) => setPendingRemoveId(id)}
+          />
+        )}
+
+        {/* Space 5: Documents Workspace (Sonara Documents) */}
+        {activeSpace === 'documents' && (
+          <DocumentsWorkspace
+            documentItems={items.filter((x) => x.type === 'document')}
+            onAddFilesClick={() => fileInputRef.current?.click()}
+            onRemoveItem={(id) => setPendingRemoveId(id)}
+          />
+        )}
+
+        {/* Space 6: Universal Master Library (The un-sandboxed central hub) */}
         {activeSpace === 'library' && (
-          <LibraryOverviewSpace
+          <UniversalLibrary
             items={items}
             playlists={lists}
-            currentId={currentId}
-            onPlayTrack={(id, q) => playTrack(id, q)}
-            onSelectPlaylist={(playlist) => {
-              const availableIds = playlist.ids.filter((id) =>
-                items.some((x) => x.id === id),
-              );
-              if (!availableIds.length) {
-                showToast('None of these tracks are on this device yet');
-                return;
+            activeTab={tab}
+            viewMode={viewMode}
+            onTabChange={setTab}
+            onViewModeChange={setViewMode}
+            onOpenInWorkspace={(item, targetSpace) => {
+              if (item.type === 'audio' || item.type === 'video') {
+                playTrack(item.id, undefined, true);
+              } else {
+                handleSelectSpace(targetSpace);
               }
-              playTrack(availableIds[0], availableIds);
             }}
-            onRequestRemove={(id) => setPendingRemoveId(id)}
-            onTriggerAddFiles={() => fileInputRef.current?.click()}
-            onTriggerImportSpotify={() => jsonInputRef.current?.click()}
+            onAddFilesClick={() => fileInputRef.current?.click()}
+            onRemoveItem={(id) => setPendingRemoveId(id)}
           />
         )}
 
-        {/* Space 5: App Preferences & Settings */}
+        {/* Space 7: App Preferences, Connectors & Equalizer Settings */}
         {activeSpace === 'settings' && (
           <SettingsSpace
             preferences={preferences}
             onUpdatePreferences={handleUpdatePreferences}
             onResetPreferences={handleResetPreferences}
             onClearDatabase={handleClearDatabase}
+            onImportSpotifyJson={importSpotifyJsonText}
+            onExportCatalogJson={exportCatalogJson}
+            eqGains={eqGains}
+            isEqEnabled={isEqEnabled}
+            onEqGainChange={handleGainChange}
+            onApplyEqPreset={handleApplyPreset}
+            onToggleEq={async (enabled) => {
+              if (enabled) {
+                await initEqualizer();
+              }
+            }}
+            itemsCount={{
+              audio: items.filter((x) => x.type === 'audio').length,
+              video: items.filter((x) => x.type === 'video').length,
+              photo: items.filter((x) => x.type === 'photo').length,
+              document: items.filter((x) => x.type === 'document').length,
+              totalBytes: items.reduce((acc, i) => acc + (i.size || 0), 0),
+            }}
           />
         )}
 
-        {/* Space 2 & 3: Music and Video Player Stage with Sidebar (kept mounted to preserve continuous playback) */}
+        {/* Space 2: Sandboxed Music Workspace (Sonara Spotify) */}
         <div
-          style={{ display: activeSpace === 'music' || activeSpace === 'video' ? 'flex' : 'none' }}
+          style={{ display: activeSpace === 'music' ? 'flex' : 'none' }}
           className="flex-1 w-full overflow-hidden relative"
         >
           <LibrarySidebar
-            items={items}
+            items={items.filter((x) => x.type === 'audio')}
             lists={lists}
             tab={tab}
             query={query}
@@ -762,7 +858,7 @@ export default function App() {
 
           <PlayerStage
             currentItem={currentItem}
-            hasItems={items.length > 0}
+            hasItems={items.some((x) => x.type === 'audio')}
             isDrawerOpen={isDrawerOpen}
             isPlaying={isPlaying}
             currentTime={currentTime}
@@ -775,7 +871,7 @@ export default function App() {
             onGoHome={() => handleSelectSpace('home')}
             onCloseDrawer={() => setIsDrawerOpen(false)}
             onEmptyPrimaryAction={() => {
-              if (items.length > 0) {
+              if (items.some((x) => x.type === 'audio')) {
                 setIsDrawerOpen(true);
               } else {
                 fileInputRef.current?.click();
@@ -807,15 +903,7 @@ export default function App() {
               }
             }}
             onToggleFullscreen={() => {
-              const el = videoRef.current as
-                | (HTMLVideoElement & { webkitEnterFullscreen?: () => void })
-                | null;
-              if (!el) return;
-              if (el.requestFullscreen) {
-                el.requestFullscreen().catch(() => {});
-              } else if (el.webkitEnterFullscreen) {
-                el.webkitEnterFullscreen();
-              }
+              handleSelectSpace('video');
             }}
             onToggleRepeat={() => {
               setRepeat((r) => {
@@ -858,6 +946,50 @@ export default function App() {
               <Menu className="w-5 h-5" aria-hidden="true" />
             )}
           </button>
+        </div>
+
+        {/* Space 3: Sandboxed Video Workspace (Sonara VLC with persistent DOM media engine) */}
+        <div
+          style={{ display: activeSpace === 'video' ? 'flex' : 'none' }}
+          className="flex-1 w-full overflow-hidden relative"
+        >
+          <VideoWorkspace
+            currentItem={currentItem}
+            videoItems={items.filter((x) => x.type === 'video')}
+            isPlaying={isPlaying}
+            currentTime={currentTime}
+            duration={duration}
+            speed={speed}
+            isMuted={isMuted}
+            audioBoostPercent={preferences.audioBoostPercent}
+            videoRef={videoRef}
+            onSelectVideo={(videoItem) => playTrack(videoItem.id, undefined, true)}
+            onTogglePlay={togglePlay}
+            onSeekInput={(fraction) => {
+              isSeekingRef.current = true;
+              if (duration > 0) {
+                setCurrentTime(fraction * duration);
+              }
+            }}
+            onSeekCommit={(fraction) => {
+              if (videoRef.current && duration > 0) {
+                videoRef.current.currentTime = fraction * duration;
+              }
+              isSeekingRef.current = false;
+            }}
+            onSkipTime={handleSkipTime}
+            onCycleSpeed={() => {
+              const next = nextPlaybackSpeed(speed);
+              setSpeed(next);
+              if (videoRef.current) {
+                videoRef.current.playbackRate = next;
+              }
+            }}
+            onToggleMute={handleToggleMute}
+            onSetAudioBoost={handleSetAudioBoost}
+            onAddFilesClick={() => fileInputRef.current?.click()}
+            onRemoveItem={(id) => setPendingRemoveId(id)}
+          />
         </div>
       </div>
 
@@ -954,7 +1086,7 @@ export default function App() {
       <input
         ref={fileInputRef}
         type="file"
-        accept="audio/*,video/*,.mp3,.m4a,.aac,.wav,.ogg,.opus,.flac,.mp4,.mov,.m4v,.webm,.mkv"
+        accept="audio/*,video/*,image/*,.mp3,.m4a,.aac,.wav,.ogg,.opus,.flac,.weba,.mp4,.mov,.m4v,.webm,.mkv,.ogv,.jpg,.jpeg,.png,.webp,.gif,.svg,.avif,.bmp,.pdf,.txt,.md,.lrc,.srt,.vtt,.json,.csv"
         multiple
         hidden
         onChange={(e) => {

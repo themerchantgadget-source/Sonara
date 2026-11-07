@@ -6,6 +6,7 @@ import {
   extractAudioPeaksFromBuffer,
   filterAndSortMedia,
   findActiveLyricIndex,
+  findActiveSubtitleCue,
   formatDuration,
   formatFileSize,
   generateDeterministicPeaks,
@@ -15,6 +16,7 @@ import {
   parseFilename,
   parseLrcLyrics,
   parseSpotifyExport,
+  parseSubtitles,
   stepQueueIndex,
 } from './media';
 
@@ -50,13 +52,19 @@ test('computeHue returns deterministic 0..359 hue', () => {
   assert.ok(h1 >= 0 && h1 < 360);
 });
 
-test('detectMediaType identifies audio and video files by mime or extension', () => {
+test('detectMediaType identifies audio, video, photo, and document files', () => {
   assert.equal(detectMediaType('track.flac', ''), 'audio');
+  assert.equal(detectMediaType('song.mp3', 'audio/mpeg'), 'audio');
   assert.equal(detectMediaType('clip.mkv', ''), 'video');
-  assert.equal(detectMediaType('unknown', 'audio/mpeg'), 'audio');
-  assert.equal(detectMediaType('unknown', 'video/mp4'), 'video');
-  assert.equal(detectMediaType('notes.txt', 'text/plain'), null);
+  assert.equal(detectMediaType('film.mp4', 'video/mp4'), 'video');
+  assert.equal(detectMediaType('poster.webp', 'image/webp'), 'photo');
+  assert.equal(detectMediaType('photo.jpg', ''), 'photo');
+  assert.equal(detectMediaType('notes.txt', 'text/plain'), 'document');
+  assert.equal(detectMediaType('manual.pdf', 'application/pdf'), 'document');
+  assert.equal(detectMediaType('subs.srt', ''), 'document');
+  assert.equal(detectMediaType('binary.xyz', 'application/octet-stream'), null);
 });
+
 
 test('normalizeText strips parentheticals and punctuation', () => {
   assert.equal(normalizeText('Daydreaming (Remastered 2016) [Live]'), 'daydreaming');
@@ -223,4 +231,40 @@ test('extractAudioPeaksFromBuffer extracts normalized peaks from channel PCM dat
   assert.ok(middle > start, `Middle peak (${middle}) should exceed start peak (${start})`);
   assert.ok(middle > end, `Middle peak (${middle}) should exceed end peak (${end})`);
 });
+
+test('parseSubtitles parses SRT and WebVTT blocks with accurate millisecond timing', () => {
+  const srt = `
+1
+00:01:15,500 --> 00:01:19,250
+Welcome to Sonara VLC player!
+
+2
+00:01:20,000 --> 00:01:25,000
+Enjoy inline playback without iOS QuickTime takeover.
+  `;
+
+  const cues = parseSubtitles(srt);
+  assert.equal(cues.length, 2);
+  assert.equal(cues[0].start, 75.5);
+  assert.equal(cues[0].end, 79.25);
+  assert.equal(cues[0].text, 'Welcome to Sonara VLC player!');
+  assert.equal(cues[1].start, 80);
+  assert.equal(cues[1].end, 85);
+});
+
+test('findActiveSubtitleCue correctly matches cue with optional timing offset', () => {
+  const cues = [
+    { id: '1', start: 10, end: 15, text: 'First line' },
+    { id: '2', start: 20, end: 25, text: 'Second line' },
+  ];
+
+  assert.equal(findActiveSubtitleCue(cues, 5), null);
+  assert.equal(findActiveSubtitleCue(cues, 12)?.text, 'First line');
+  assert.equal(findActiveSubtitleCue(cues, 16), null);
+  assert.equal(findActiveSubtitleCue(cues, 22)?.text, 'Second line');
+
+  // With a +1.0 second offset (e.g. subtitle is ahead by 1s)
+  assert.equal(findActiveSubtitleCue(cues, 9.5, 1.0)?.text, 'First line');
+});
+
 
