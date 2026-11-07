@@ -224,20 +224,21 @@ export const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
             relative rounded-2xl overflow-hidden bg-black select-none shadow-2xl transition-all
             ${
               isTheaterFullscreen
-                ? 'fixed inset-0 z-50 rounded-none w-screen h-screen flex flex-col justify-between'
-                : 'w-full aspect-[16/10] sm:aspect-[16/9]'
+                ? 'fixed inset-0 z-50 rounded-none w-full h-full flex flex-col justify-between'
+                : 'w-full aspect-[16/10] sm:aspect-[16/9] max-h-[70vh]'
             }
           `}
         >
             {/* The Actual Video Element configured strictly for iOS Inline Playback */}
             <video
               ref={videoRef}
-              playsInline
+              playsInline={true}
               webkit-playsinline="true"
               x5-playsinline="true"
+              controls={false}
               preload="metadata"
               onClick={onTogglePlay}
-              className={`w-full h-full bg-black cursor-pointer ${getAspectRatioClass()}`}
+              className={`w-full h-full max-w-full max-h-full bg-black cursor-pointer ${getAspectRatioClass()}`}
             />
 
             {/* Live Synchronized Subtitle Overlay */}
