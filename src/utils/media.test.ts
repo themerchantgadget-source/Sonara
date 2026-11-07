@@ -1,0 +1,186 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  computeHue,
+  detectMediaType,
+  filterAndSortMedia,
+  findActiveLyricIndex,
+  formatDuration,
+  formatFileSize,
+  matchSpotifyTrack,
+  nextPlaybackSpeed,
+  normalizeText,
+  parseFilename,
+  parseLrcLyrics,
+  parseSpotifyExport,
+  stepQueueIndex,
+} from './media';
+
+test('parseFilename extracts artist and title when separated by " - "', () => {
+  assert.deepEqual(parseFilename('Boards of Canada - Roygbiv.mp3'), {
+    artist: 'Boards of Canada',
+    title: 'Roygbiv',
+  });
+  assert.deepEqual(parseFilename('midnight_rain_demo.wav'), {
+    artist: '',
+    title: 'midnight rain demo',
+  });
+});
+
+test('formatDuration formats seconds into m:ss and handles invalid values', () => {
+  assert.equal(formatDuration(0), '0:00');
+  assert.equal(formatDuration(65), '1:05');
+  assert.equal(formatDuration(605), '10:05');
+  assert.equal(formatDuration(Number.NaN), '0:00');
+  assert.equal(formatDuration(-4), '0:00');
+});
+
+test('formatFileSize formats bytes into MB and GB cleanly', () => {
+  assert.equal(formatFileSize(undefined), 'Local file');
+  assert.equal(formatFileSize(5 * 1024 * 1024), '5.0 MB');
+  assert.equal(formatFileSize(1.5 * 1024 * 1024 * 1024), '1.50 GB');
+});
+
+test('computeHue returns deterministic 0..359 hue', () => {
+  const h1 = computeHue('Sonara');
+  const h2 = computeHue('Sonara');
+  assert.equal(h1, h2);
+  assert.ok(h1 >= 0 && h1 < 360);
+});
+
+test('detectMediaType identifies audio and video files by mime or extension', () => {
+  assert.equal(detectMediaType('track.flac', ''), 'audio');
+  assert.equal(detectMediaType('clip.mkv', ''), 'video');
+  assert.equal(detectMediaType('unknown', 'audio/mpeg'), 'audio');
+  assert.equal(detectMediaType('unknown', 'video/mp4'), 'video');
+  assert.equal(detectMediaType('notes.txt', 'text/plain'), null);
+});
+
+test('normalizeText strips parentheticals and punctuation', () => {
+  assert.equal(normalizeText('Daydreaming (Remastered 2016) [Live]'), 'daydreaming');
+});
+
+test('matchSpotifyTrack and parseSpotifyExport match local tracks', () => {
+  const library = [
+    {
+      id: '1',
+      title: 'Nude',
+      artist: 'Radiohead',
+      name: 'Radiohead - Nude.flac',
+    },
+    {
+      id: '2',
+      title: 'Teardrop',
+      artist: 'Massive Attack',
+      name: 'Massive Attack - Teardrop.mp3',
+    },
+  ];
+
+  const matched = matchSpotifyTrack(library, 'Nude (2007)', 'Radiohead');
+  assert.equal(matched?.id, '1');
+
+  const json = JSON.stringify({
+    playlists: [
+      {
+        name: 'Late Night',
+        items: [
+          { track: { trackName: 'Nude', artistName: 'Radiohead' } },
+          { track: { trackName: 'Unfinished Sympathy', artistName: 'Massive Attack' } },
+        ],
+      },
+    ],
+  });
+
+  const playlists = parseSpotifyExport(json, library);
+  assert.equal(playlists.length, 1);
+  assert.deepEqual(playlists[0], {
+    name: 'Late Night',
+    ids: ['1'],
+    total: 2,
+  });
+});
+
+test('stepQueueIndex advances sequentially and shuffles without repeating', () => {
+  const queue = ['a', 'b', 'c'];
+  assert.equal(stepQueueIndex(queue, 'a', 1, false), 'b');
+  assert.equal(stepQueueIndex(queue, 'a', -1, false), 'c');
+  assert.equal(stepQueueIndex(queue, 'b', 1, true, () => 0.9), 'c');
+});
+
+test('nextPlaybackSpeed cycles through supported speeds', () => {
+  assert.equal(nextPlaybackSpeed(1), 1.25);
+  assert.equal(nextPlaybackSpeed(2), 0.75);
+  assert.equal(nextPlaybackSpeed(0.75), 1);
+});
+
+test('filterAndSortMedia filters by type and query and sorts newest first', () => {
+  const items = [
+    { id: '1', type: 'audio' as const, title: 'Alpha', artist: 'One', added: 100 },
+    { id: '2', type: 'audio' as const, title: 'Beta', artist: 'Two', added: 200 },
+    { id: '3', type: 'video' as const, title: 'Gamma', artist: 'Three', added: 300 },
+  ];
+
+  const songs = filterAndSortMedia(items, 'songs', '');
+  assert.deepEqual(
+    songs.map((s) => s.id),
+    ['2', '1'],
+  );
+
+  const filtered = filterAndSortMedia(items, 'songs', 'alpha');
+  assert.deepEqual(
+    filtered.map((s) => s.id),
+    ['1'],
+  );
+});
+
+test('parseLrcLyrics parses standard and high-resolution timestamps and sorts chronologically', () => {
+  const lrc = `
+[ti:Midnight Drive]
+[00:15.50] Into the neon night
+[00:05.00] Engine hums softly
+[00:30.00] City lights fading
+  `;
+
+  const parsed = parseLrcLyrics(lrc);
+  assert.equal(parsed.length, 3);
+  assert.deepEqual(parsed[0], { time: 5, text: 'Engine hums softly' });
+  assert.deepEqual(parsed[1], { time: 15.5, text: 'Into the neon night' });
+  assert.deepEqual(parsed[2], { time: 30, text: 'City lights fading' });
+});
+
+test('findActiveLyricIndex identifies correct active line for current playback time', () => {
+  const lyrics = [
+    { time: 5, text: 'Intro' },
+    { time: 15, text: 'Verse 1' },
+    { time: 30, text: 'Chorus' },
+  ];
+
+  assert.equal(findActiveLyricIndex(lyrics, 2), -1);
+  assert.equal(findActiveLyricIndex(lyrics, 5), 0);
+  assert.equal(findActiveLyricIndex(lyrics, 14.9), 0);
+  assert.equal(findActiveLyricIndex(lyrics, 15), 1);
+  assert.equal(findActiveLyricIndex(lyrics, 40), 2);
+});
+
+test('media categorization separates audio and video cleanly', () => {
+  const items = [
+    { id: '1', type: 'audio' as const, title: 'Track 1', artist: 'A', name: '1.mp3', size: 1000, added: 10 },
+    { id: '2', type: 'video' as const, title: 'Video 1', artist: 'B', name: '2.mp4', size: 5000, added: 20 },
+    { id: '3', type: 'audio' as const, title: 'Track 2', artist: 'C', name: '3.flac', size: 2000, added: 30 },
+  ];
+
+  const audioFiles = items.filter((x) => x.type === 'audio');
+  const videoFiles = items.filter((x) => x.type === 'video');
+  assert.equal(audioFiles.length, 2);
+  assert.equal(videoFiles.length, 1);
+  assert.equal(audioFiles.reduce((sum, item) => sum + item.size, 0), 3000);
+});
+
+test('filterAndSortMedia sorts alphabetically and by recent', () => {
+  const items = [
+    { id: '1', type: 'audio' as const, title: 'Zebra', artist: 'Artist A', added: 100 },
+    { id: '2', type: 'audio' as const, title: 'Apple', artist: 'Artist B', added: 200 },
+  ];
+  const sortedNewest = filterAndSortMedia(items, 'songs', '');
+  assert.equal(sortedNewest[0].id, '2'); // added 200 is newest
+});

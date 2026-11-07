@@ -1,0 +1,6 @@
+{
+  "name": "Sonara",
+  "description": "Offline music and video player for local files and Spotify playlist matching.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
